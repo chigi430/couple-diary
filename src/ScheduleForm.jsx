@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { S } from "./styles";
 import Avatar from "./Avatar";
+import { IconX } from "./Icons";
+import { toast } from "./toast";
+import MoreMenu from "./MoreMenu";
 
 export default function ScheduleForm({ date, existing, meInfo, onSave, onDelete, onClose }) {
   const [title, setTitle] = useState(existing?.title || "");
@@ -30,6 +33,7 @@ export default function ScheduleForm({ date, existing, meInfo, onSave, onDelete,
       return;
     }
     onClose();
+    toast(existing ? "일정을 수정했어요 ✓" : "일정을 등록했어요 ✓");
   };
 
   const remove = async () => {
@@ -37,6 +41,7 @@ export default function ScheduleForm({ date, existing, meInfo, onSave, onDelete,
     await onDelete(existing.id);
     setBusy(false);
     onClose();
+    toast("일정을 삭제했어요");
   };
 
   return (
@@ -45,7 +50,16 @@ export default function ScheduleForm({ date, existing, meInfo, onSave, onDelete,
         <div style={S.sheetHandle} />
         <div style={S.sheetHead}>
           <div style={S.sheetDate}>{existing ? "일정 수정" : "일정 등록"}</div>
-          <button style={S.closeBtn} onClick={onClose}>✕</button>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <MoreMenu
+              items={
+                existing
+                  ? [{ label: "저장", onClick: save }, { label: "삭제", onClick: remove, danger: true }]
+                  : [{ label: "저장", onClick: save }]
+              }
+            />
+            <button style={S.closeBtn} onClick={onClose}><IconX size={14} /></button>
+          </div>
         </div>
 
         <div style={S.schedByRow}>
@@ -63,7 +77,7 @@ export default function ScheduleForm({ date, existing, meInfo, onSave, onDelete,
         <div style={S.toggleRow}>
           <span style={S.toggleLabel}>종일</span>
           <button
-            style={{ ...S.toggleSwitch, background: allDay ? "#D98763" : "#E7D9CF" }}
+            style={{ ...S.toggleSwitch, background: allDay ? "#D98763" : "var(--border)" }}
             onClick={() => setAllDay((v) => !v)}
           >
             <span style={{ ...S.toggleKnob, left: allDay ? 21 : 3 }} />
@@ -88,14 +102,6 @@ export default function ScheduleForm({ date, existing, meInfo, onSave, onDelete,
               <input style={S.input} type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
             </div>
           </div>
-        )}
-
-        <button style={{ ...S.saveBtn, opacity: busy ? 0.7 : 1 }} onClick={save} disabled={busy}>
-          {busy ? "저장 중…" : "저장하기"}
-        </button>
-
-        {existing && (
-          <button style={S.deleteBtn} onClick={remove} disabled={busy}>삭제하기</button>
         )}
       </div>
     </div>

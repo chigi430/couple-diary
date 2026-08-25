@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { S } from "./styles";
 import { STAMPS } from "./constants";
 import SignedImage from "./SignedImage";
+import { IconX } from "./Icons";
 
 function hasAny(entry) {
   return entry && ((entry.photos && entry.photos.length) || entry.note || entry.schedule || entry.mood || (entry.stamps && entry.stamps.length));
@@ -158,7 +159,7 @@ export default function Recap({ byDate, people, onClose }) {
             <span style={S.recapYearLabel}>{year}년 리캡</span>
             <button style={S.recapYearBtn} onClick={nextYear} disabled={yi >= years.length - 1}>›</button>
           </div>
-          <button style={S.closeBtn} onClick={onClose}>✕</button>
+          <button style={S.closeBtn} onClick={onClose}><IconX size={14} /></button>
         </div>
 
         <div style={S.recapScroll} className="no-scrollbar">

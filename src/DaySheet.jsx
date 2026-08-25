@@ -3,8 +3,10 @@ import { S } from "./styles";
 import { HOLIDAYS } from "./constants";
 import { prettyDate } from "./utils";
 import Avatar from "./Avatar";
-import DiaryTab from "./DiaryTab";
+import DiaryTab, { hasAny } from "./DiaryTab";
 import ScheduleForm from "./ScheduleForm";
+import { IconX, IconPlus } from "./Icons";
+import MoreMenu from "./MoreMenu";
 
 export default function DaySheet({
   date,
@@ -24,7 +26,9 @@ export default function DaySheet({
 }) {
   const [subTab, setSubTab] = useState(onlyDiary ? "diary" : initialTab);
   const [form, setForm] = useState(null); // null | { date } | { editing }
+  const [diaryMode, setDiaryMode] = useState(() => (hasAny(entry) ? "view" : "edit"));
   const effectiveTab = onlyDiary ? "diary" : subTab;
+  const diaryHasContent = hasAny(entry);
 
   const who = (id) => people[id] || { emoji: "🙂", color: "#D98763", display_name: "?" };
   const meInfo = who(me);
@@ -38,7 +42,18 @@ export default function DaySheet({
             {prettyDate(date)}
             {HOLIDAYS[date] && <span style={S.holidayTag}>{HOLIDAYS[date]}</span>}
           </div>
-          <button style={S.closeBtn} onClick={onClose}>✕</button>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            {effectiveTab === "diary" && diaryHasContent && (
+              <MoreMenu
+                items={
+                  diaryMode === "view"
+                    ? [{ label: "수정", onClick: () => setDiaryMode("edit") }]
+                    : [{ label: "완료", onClick: () => setDiaryMode("view") }]
+                }
+              />
+            )}
+            <button style={S.closeBtn} onClick={onClose}><IconX size={14} /></button>
+          </div>
         </div>
 
         {!onlyDiary && (
@@ -55,7 +70,7 @@ export default function DaySheet({
         {effectiveTab === "schedule" ? (
           <>
             <div style={S.viewActionsRow}>
-              <button style={S.schedAddFab} onClick={() => setForm({ date })}>＋</button>
+              <button style={S.schedAddFab} onClick={() => setForm({ date })}><IconPlus size={18} /></button>
             </div>
             {daySchedules.length === 0 ? (
               <div style={S.viewEmpty}>등록된 일정이 없어요.</div>
@@ -93,6 +108,8 @@ export default function DaySheet({
             saveEntry={saveEntry}
             uploadPhotos={uploadPhotos}
             deletePhoto={deletePhoto}
+            mode={diaryMode}
+            setMode={setDiaryMode}
           />
         )}
       </div>

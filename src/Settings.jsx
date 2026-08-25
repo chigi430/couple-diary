@@ -4,7 +4,11 @@ import { S } from "./styles";
 import { EMOJI_CHOICES, COLOR_CHOICES } from "./constants";
 import { compressImage, uuid } from "./utils";
 import { pushSupported, isPushSubscribed, subscribePush, unsubscribePush } from "./push";
+import { isDarkActive, setTheme } from "./theme";
+import { toast } from "./toast";
 import Avatar from "./Avatar";
+import { IconX, IconPlus } from "./Icons";
+import MoreMenu from "./MoreMenu";
 
 const IS_IOS = /iP(hone|od|ad)/.test(navigator.userAgent);
 const IS_STANDALONE = window.navigator.standalone || window.matchMedia("(display-mode: standalone)").matches;
@@ -19,6 +23,7 @@ export default function Settings({ profile, onSaved, onSignOut }) {
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [darkOn, setDarkOn] = useState(() => isDarkActive());
   const [pushOn, setPushOn] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
   const [pushMsg, setPushMsg] = useState("");
@@ -40,6 +45,12 @@ export default function Settings({ profile, onSaved, onSignOut }) {
     setAvatarUrl(profile?.avatar_url || "");
     setErr("");
     setEditOpen(true);
+  };
+
+  const toggleDark = () => {
+    const next = !darkOn;
+    setDarkOn(next);
+    setTheme(next ? "dark" : "light");
   };
 
   const togglePush = async () => {
@@ -138,14 +149,24 @@ export default function Settings({ profile, onSaved, onSignOut }) {
     }
     await onSaved();
     setEditOpen(false);
+    toast("프로필을 저장했어요 ✓");
   };
 
   return (
     <div style={S.body}>
+      <div style={S.settingsTopRow}>
+        <MoreMenu
+          items={[
+            { label: "로그아웃", onClick: onSignOut },
+            { label: "커플 연결 해제", onClick: leaveCouple, danger: true },
+          ]}
+        />
+      </div>
+
       <div style={S.profileDetailCard}>
         <div style={S.profileAvatarWrap}>
           <Avatar person={profile} size={134} />
-          <button style={S.profileEditFab} onClick={openEdit} aria-label="프로필 수정">＋</button>
+          <button style={S.profileEditFab} onClick={openEdit} aria-label="프로필 수정"><IconPlus size={16} /></button>
         </div>
         <div style={S.profileDetailName}>{profile?.display_name || "나"}</div>
         <div style={S.profileDetailMeta}>
@@ -155,13 +176,26 @@ export default function Settings({ profile, onSaved, onSignOut }) {
       </div>
 
       <div style={S.settingsCard}>
+        <div style={S.authField}>
+          <label style={S.authLabel}>화면</label>
+          <div style={S.toggleRow}>
+            <span style={S.toggleLabel}>다크모드</span>
+            <button
+              style={{ ...S.toggleSwitch, background: darkOn ? "#D98763" : "var(--border)" }}
+              onClick={toggleDark}
+            >
+              <span style={{ ...S.toggleKnob, left: darkOn ? 21 : 3 }} />
+            </button>
+          </div>
+        </div>
+
         {pushSupported() ? (
           <div style={S.authField}>
             <label style={S.authLabel}>알림</label>
             <div style={S.toggleRow}>
               <span style={S.toggleLabel}>상대방 소식 알림 받기</span>
               <button
-                style={{ ...S.toggleSwitch, background: pushOn ? "#D98763" : "#E7D9CF", opacity: pushBusy ? 0.7 : 1 }}
+                style={{ ...S.toggleSwitch, background: pushOn ? "#D98763" : "var(--border)", opacity: pushBusy ? 0.7 : 1 }}
                 onClick={togglePush}
                 disabled={pushBusy}
               >
@@ -177,7 +211,7 @@ export default function Settings({ profile, onSaved, onSignOut }) {
                 <div style={S.toggleRow}>
                   <span style={S.toggleLabel}>상대방 활동 알림</span>
                   <button
-                    style={{ ...S.toggleSwitch, background: prefs.notify_activity ? "#D98763" : "#E7D9CF" }}
+                    style={{ ...S.toggleSwitch, background: prefs.notify_activity ? "#D98763" : "var(--border)" }}
                     onClick={() => togglePref("notify_activity")}
                   >
                     <span style={{ ...S.toggleKnob, left: prefs.notify_activity ? 21 : 3 }} />
@@ -186,7 +220,7 @@ export default function Settings({ profile, onSaved, onSignOut }) {
                 <div style={S.toggleRow}>
                   <span style={S.toggleLabel}>오늘 기록 깜빡하면 알려주기</span>
                   <button
-                    style={{ ...S.toggleSwitch, background: prefs.notify_reminder ? "#D98763" : "#E7D9CF" }}
+                    style={{ ...S.toggleSwitch, background: prefs.notify_reminder ? "#D98763" : "var(--border)" }}
                     onClick={() => togglePref("notify_reminder")}
                   >
                     <span style={{ ...S.toggleKnob, left: prefs.notify_reminder ? 21 : 3 }} />
@@ -195,7 +229,7 @@ export default function Settings({ profile, onSaved, onSignOut }) {
                 <div style={S.toggleRow}>
                   <span style={S.toggleLabel}>기념일/D-day 알림</span>
                   <button
-                    style={{ ...S.toggleSwitch, background: prefs.notify_anniversary ? "#D98763" : "#E7D9CF" }}
+                    style={{ ...S.toggleSwitch, background: prefs.notify_anniversary ? "#D98763" : "var(--border)" }}
                     onClick={() => togglePref("notify_anniversary")}
                   >
                     <span style={{ ...S.toggleKnob, left: prefs.notify_anniversary ? 21 : 3 }} />
@@ -211,9 +245,6 @@ export default function Settings({ profile, onSaved, onSignOut }) {
             <div style={S.authSub}>이 브라우저는 푸시 알림을 지원하지 않아요.</div>
           </div>
         )}
-
-        <button style={S.settingsSignOut} onClick={onSignOut}>로그아웃</button>
-        <button style={S.settingsDanger} onClick={leaveCouple} disabled={busy}>커플 연결 해제</button>
       </div>
 
       {editOpen && (
@@ -222,7 +253,10 @@ export default function Settings({ profile, onSaved, onSignOut }) {
             <div style={S.sheetHandle} />
             <div style={S.sheetHead}>
               <div style={S.sheetDate}>프로필 수정</div>
-              <button style={S.closeBtn} onClick={() => setEditOpen(false)}>✕</button>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <MoreMenu items={[{ label: "저장", onClick: save }]} />
+                <button style={S.closeBtn} onClick={() => setEditOpen(false)}><IconX size={14} /></button>
+              </div>
             </div>
 
             {err && <div style={S.authError}>{err}</div>}
@@ -257,10 +291,6 @@ export default function Settings({ profile, onSaved, onSignOut }) {
                 ))}
               </div>
             </div>
-
-            <button style={{ ...S.saveBtn, opacity: busy ? 0.7 : 1 }} onClick={save} disabled={busy}>
-              {busy ? "저장 중…" : "저장하기"}
-            </button>
           </div>
         </div>
       )}

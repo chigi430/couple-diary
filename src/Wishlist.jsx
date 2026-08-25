@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { S } from "./styles";
 import Avatar from "./Avatar";
 import { useBucketList } from "./useBucketList";
+import { IconX, IconCheck } from "./Icons";
 
 export default function Wishlist({ coupleId, userId, people }) {
   const { items, addItem, toggleItem, deleteItem } = useBucketList(coupleId);
@@ -46,13 +47,13 @@ export default function Wishlist({ coupleId, userId, people }) {
           <>
             {todo.length > 0 && (
               <div style={S.wlList}>
-                {todo.map((it) => (
-                  <div key={it.id} style={S.wlItem}>
+                {todo.map((it, i) => (
+                  <div key={it.id} style={{ ...S.wlItem, ...S.listPop, animationDelay: `${Math.min(i * 30, 300)}ms` }}>
                     <button style={S.wlCheck} onClick={() => toggleItem(it.id, true, userId)} aria-label="완료 표시" />
                     <span style={S.wlTitle}>{it.title}</span>
                     <Avatar person={people?.[it.created_by]} size={18} />
                     <button style={S.wlDel} onClick={() => deleteItem(it.id)}>
-                      ✕
+                      <IconX size={13} />
                     </button>
                   </div>
                 ))}
@@ -63,19 +64,19 @@ export default function Wishlist({ coupleId, userId, people }) {
               <div style={{ marginTop: 14 }}>
                 <div style={S.recentHead}>완료 {done.length}개 🎉</div>
                 <div style={S.wlList}>
-                  {done.map((it) => (
-                    <div key={it.id} style={S.wlItem}>
+                  {done.map((it, i) => (
+                    <div key={it.id} style={{ ...S.wlItem, ...S.listPop, animationDelay: `${Math.min(i * 30, 300)}ms` }}>
                       <button
                         style={{ ...S.wlCheck, ...S.wlCheckOn }}
                         onClick={() => toggleItem(it.id, false, userId)}
                         aria-label="완료 취소"
                       >
-                        ✓
+                        <IconCheck size={13} />
                       </button>
                       <span style={{ ...S.wlTitle, ...S.wlTitleDone }}>{it.title}</span>
                       <Avatar person={people?.[it.done_by]} size={18} />
                       <button style={S.wlDel} onClick={() => deleteItem(it.id)}>
-                        ✕
+                        <IconX size={13} />
                       </button>
                     </div>
                   ))}

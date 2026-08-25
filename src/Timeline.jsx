@@ -86,13 +86,17 @@ export default function Timeline({ byDate, people, onOpen, autoOpenRecap, onAuto
         dates.length === 0 ? (
           <div style={S.tlEmpty}>아직 기록이 없어요.</div>
         ) : (
-          dates.map((k) => {
+          dates.map((k, i) => {
             const e = byDate[k];
             const authorId = e.note ? e.note_by : e.photos && e.photos[0] ? e.photos[0].uploaded_by : null;
             const author = who(authorId);
             const cover = e.photos && e.photos[0];
             return (
-              <button key={k} style={S.tlCard} onClick={() => onOpen(k)}>
+              <button
+                key={k}
+                style={{ ...S.tlCard, ...S.listPop, animationDelay: `${Math.min(i * 30, 300)}ms` }}
+                onClick={() => onOpen(k)}
+              >
                 {cover ? (
                   <SignedImage path={cover.storage_path} style={S.tlThumb} />
                 ) : (
@@ -130,8 +134,12 @@ export default function Timeline({ byDate, people, onOpen, autoOpenRecap, onAuto
         <div style={S.tlEmpty}>아직 사진이 없어요.</div>
       ) : (
         <div style={S.memGrid}>
-          {photoDates.map((k) => (
-            <button key={k} style={S.memCell} onClick={() => onOpen(k)}>
+          {photoDates.map((k, i) => (
+            <button
+              key={k}
+              style={{ ...S.memCell, ...S.listPop, animationDelay: `${Math.min(i * 25, 275)}ms` }}
+              onClick={() => onOpen(k)}
+            >
               <SignedImage path={byDate[k].photos[0].storage_path} style={S.memImg} />
               <span style={S.memDateTag}>{k.slice(5).replace("-", ".")}</span>
             </button>

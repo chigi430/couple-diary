@@ -13,6 +13,8 @@ import Wishlist from "./Wishlist";
 import DaySheet from "./DaySheet";
 import Settings from "./Settings";
 import Avatar from "./Avatar";
+import ToastHost from "./ToastHost";
+import { IconToday, IconCalendar, IconList, IconStar, IconSettings } from "./Icons";
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -138,6 +140,7 @@ export default function App() {
   return (
     <div style={S.root}>
       <style>{css}</style>
+      <ToastHost />
 
       <header style={S.header}>
         <div style={S.brandRow}>
@@ -227,19 +230,19 @@ export default function App() {
 
       <nav style={S.tabbar}>
         <button style={{ ...S.tabBtn, ...(tab === "today" ? S.tabOn : {}) }} onClick={() => setTab("today")}>
-          <span style={S.tabIcon}>◉</span><span>오늘</span>
+          <IconToday size={17} /><span>오늘</span>
         </button>
         <button style={{ ...S.tabBtn, ...(tab === "calendar" ? S.tabOn : {}) }} onClick={() => setTab("calendar")}>
-          <span style={S.tabIcon}>▦</span><span>달력</span>
+          <IconCalendar size={17} /><span>달력</span>
         </button>
         <button style={{ ...S.tabBtn, ...(tab === "timeline" ? S.tabOn : {}) }} onClick={() => setTab("timeline")}>
-          <span style={S.tabIcon}>☰</span><span>타임라인</span>
+          <IconList size={17} /><span>타임라인</span>
         </button>
         <button style={{ ...S.tabBtn, ...(tab === "wishlist" ? S.tabOn : {}) }} onClick={() => setTab("wishlist")}>
-          <span style={S.tabIcon}>☆</span><span>위시리스트</span>
+          <IconStar size={17} /><span>위시리스트</span>
         </button>
         <button style={{ ...S.tabBtn, ...(tab === "settings" ? S.tabOn : {}) }} onClick={() => setTab("settings")}>
-          <span style={S.tabIcon}>⚙</span><span>설정</span>
+          <IconSettings size={17} /><span>설정</span>
         </button>
       </nav>
 

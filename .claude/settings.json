@@ -6,7 +6,8 @@
       "Bash(npm run preview)",
       "PowerShell(npm run build)",
       "PowerShell(npm run dev)",
-      "PowerShell(npm run preview)"
+      "PowerShell(npm run preview)",
+      "Bash(netstat*)"
     ]
   }
 }

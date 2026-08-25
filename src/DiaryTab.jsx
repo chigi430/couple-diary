@@ -6,15 +6,15 @@ import SignedImage from "./SignedImage";
 import Avatar from "./Avatar";
 import PlacePicker from "./PlacePicker";
 import PhotoCarousel from "./PhotoCarousel";
+import { IconX, IconPlus } from "./Icons";
 
-function hasAny(e) {
+export function hasAny(e) {
   return e && ((e.photos && e.photos.length) || e.note || e.schedule || e.mood || (e.stamps && e.stamps.length));
 }
 
-export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPhotos, deletePhoto }) {
+export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPhotos, deletePhoto, mode, setMode }) {
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
-  const [mode, setMode] = useState(() => (hasAny(entry) ? "view" : "edit"));
   const [showPicker, setShowPicker] = useState(false);
   const e = entry || {};
   const stamps = e.stamps || [];
@@ -87,10 +87,6 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
             )}
 
             {e.note && <p style={S.viewNote}>{e.note}</p>}
-
-            <div style={S.viewActionsRow}>
-              <button style={S.smallActionBtn} onClick={() => setMode("edit")}>✎ 수정</button>
-            </div>
           </>
         )}
       </div>
@@ -129,12 +125,12 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
           <div key={p.id} style={S.photoItem}>
             <SignedImage path={p.storage_path} style={S.photoImg} />
             <span style={{ ...S.photoBy, background: who(p.uploaded_by).color }}>{who(p.uploaded_by).emoji}</span>
-            <button style={S.photoDel} onClick={() => deletePhoto(p)}>✕</button>
+            <button style={S.photoDel} onClick={() => deletePhoto(p)}><IconX size={11} /></button>
           </div>
         ))}
         {uploading && <div style={S.photoLoading}>올리는 중…</div>}
         <button style={S.addPhoto} onClick={() => fileRef.current && fileRef.current.click()}>
-          <span style={S.addPhotoPlus}>＋</span><span style={S.addPhotoTxt}>추가</span>
+          <IconPlus size={18} /><span style={S.addPhotoTxt}>추가</span>
         </button>
         <input ref={fileRef} type="file" accept="image/*" multiple onChange={onPick} onClick={(ev) => { ev.target.value = null; }} style={{ display: "none" }} />
       </div>
@@ -177,13 +173,7 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
         </div>
       )}
 
-      {!empty && (
-        <div style={S.viewActionsRow}>
-          <button style={S.smallActionBtn} onClick={() => setMode("view")}>완료</button>
-        </div>
-      )}
-
-      <p style={{ fontSize: 11.5, color: "#C0B2A8", textAlign: "center", marginTop: 10 }}>
+      <p style={{ fontSize: 11.5, color: "var(--text-muted2)", textAlign: "center", marginTop: 10 }}>
         입력하면 자동으로 저장돼요. (칸을 벗어날 때 저장됩니다.)
       </p>
     </div>
