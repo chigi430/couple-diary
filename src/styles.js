@@ -97,7 +97,7 @@ export const S = {
   tabIcon: { fontSize: 15, lineHeight: 1 },
 
   overlay: { position: "fixed", inset: 0, background: "rgba(58,34,28,0.42)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 60, animation: "fadeIn .18s ease", backdropFilter: "blur(2px)" },
-  sheet: { width: "100%", maxWidth: 460, background: "#FFFDFB", borderRadius: "26px 26px 0 0", padding: "10px 20px 26px", minHeight: "100vh", maxHeight: "100vh", overflowY: "auto", animation: "sheetUp .26s cubic-bezier(.2,.8,.2,1)" },
+  sheet: { width: "100%", maxWidth: 460, background: "#FFFDFB", borderRadius: "26px 26px 0 0", padding: "10px 20px 26px", minHeight: "90vh", maxHeight: "90vh", overflowY: "auto", animation: "sheetUp .26s cubic-bezier(.2,.8,.2,1)" },
   sheetHandle: { width: 40, height: 4, borderRadius: 4, background: "#E7D9CF", margin: "6px auto 14px" },
   sheetHead: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 },
   sheetDate: { fontSize: 18, fontWeight: 800, color: "#5A2A3A", letterSpacing: "-0.02em", display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 },
