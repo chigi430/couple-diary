@@ -143,26 +143,27 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
         <div style={{ flex: 1 }}>
           <div style={S.fieldLabel}>장소</div>
           <input key={e.place || ""} style={S.input} placeholder="예: 성수동" defaultValue={e.place || ""} onBlur={(ev) => set({ place: ev.target.value })} />
-          {!showPicker && (
-            <button style={S.placePickToggle} onClick={() => setShowPicker(true)}>📍 지도에서 선택</button>
-          )}
-          {showPicker && (
-            <PlacePicker
-              initialLat={e.place_lat}
-              initialLng={e.place_lng}
-              onCancel={() => setShowPicker(false)}
-              onPick={({ place, lat, lng }) => {
-                set({ place, place_lat: lat, place_lng: lng });
-                setShowPicker(false);
-              }}
-            />
-          )}
         </div>
         <div style={{ flex: 1 }}>
           <div style={S.fieldLabel}>오늘 먹은 것</div>
           <input style={S.input} placeholder="예: 로제 파스타" defaultValue={e.food || ""} onBlur={(ev) => set({ food: ev.target.value })} />
         </div>
       </div>
+
+      {!showPicker && (
+        <button style={S.placePickToggle} onClick={() => setShowPicker(true)}>📍 지도에서 선택</button>
+      )}
+      {showPicker && (
+        <PlacePicker
+          initialLat={e.place_lat}
+          initialLng={e.place_lng}
+          onCancel={() => setShowPicker(false)}
+          onPick={({ place, lat, lng }) => {
+            set({ place, place_lat: lat, place_lng: lng });
+            setShowPicker(false);
+          }}
+        />
+      )}
 
       <div style={S.fieldLabel}>일정</div>
       <input style={S.input} placeholder="예: 저녁 7시 예약" defaultValue={e.schedule || ""} onBlur={(ev) => set({ schedule: ev.target.value })} />

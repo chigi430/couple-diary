@@ -206,7 +206,7 @@ export const S = {
   weekBar: { position: "absolute", height: 17, borderRadius: 6, fontSize: 9.5, fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", paddingLeft: 5, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", cursor: "pointer" },
 
   // 장소 지도
-  placePickToggle: { border: "1px solid #F0E4DB", background: "#FBF5F1", color: "#B0553B", fontSize: 12, fontWeight: 700, padding: "8px 12px", borderRadius: 10, cursor: "pointer", marginTop: 6 },
+  placePickToggle: { width: "100%", border: "1px solid #F0E4DB", background: "#FBF5F1", color: "#B0553B", fontSize: 12.5, fontWeight: 700, padding: "10px 12px", borderRadius: 10, cursor: "pointer", marginTop: 8 },
   placePickBox: { marginTop: 8, borderRadius: 12, overflow: "hidden", border: "1px solid #F0E4DB" },
   placePickMap: { width: "100%", height: 180 },
   placePickHint: { fontSize: 11.5, color: "#A8968D", padding: "8px 10px", background: "#FBF5F1" },
