@@ -77,22 +77,6 @@ export default function Settings({ profile, onSaved, onSignOut }) {
     }
   };
 
-  const sendTestPush = async () => {
-    setPushBusy(true);
-    setPushMsg("");
-    try {
-      const { error } = await supabase.functions.invoke("send-push", {
-        body: { user_ids: [profile.id], title: "테스트 알림", body: "잘 도착하나요? 🔔", url: "/" },
-      });
-      if (error) throw error;
-      setPushMsg("전송했어요. 잠시 후 알림을 확인해보세요.");
-    } catch (e) {
-      setPushMsg(e.message);
-    } finally {
-      setPushBusy(false);
-    }
-  };
-
   const onPickAvatar = async (ev) => {
     const file = ev.target.files && ev.target.files[0];
     ev.target.value = "";
@@ -217,9 +201,6 @@ export default function Settings({ profile, onSaved, onSignOut }) {
                     <span style={{ ...S.toggleKnob, left: prefs.notify_anniversary ? 21 : 3 }} />
                   </button>
                 </div>
-                <button style={S.smallActionBtn} onClick={sendTestPush} disabled={pushBusy}>
-                  테스트 알림 보내기
-                </button>
               </div>
             )}
             {pushMsg && <div style={S.authSub}>{pushMsg}</div>}
