@@ -32,10 +32,20 @@ npm run dev
 ## 배포 (나중에)
 
 GitHub 에 올린 뒤 Vercel 에 연결합니다. Vercel 프로젝트 설정의
-Environment Variables 에 아래 두 개를 넣어야 합니다.
+Environment Variables 에 아래를 넣어야 합니다.
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_KEY`
+- `VITE_KAKAO_MAP_APP_KEY` (다녀온 장소 지도 기능용, 아래 참고)
+
+## 다녀온 장소 지도 (카카오맵)
+
+일기의 "장소"를 지도에서 핀 찍어 등록하고, 타임라인 탭의 "지도" 보기에서 모아볼 수 있습니다.
+
+1. [Kakao Developers](https://developers.kakao.com) → 내 애플리케이션 → **애플리케이션 추가**
+2. 앱 설정 → **플랫폼** → Web 플랫폼 등록 → 사이트 도메인에 `http://localhost:5173`과 실제 배포 도메인을 둘 다 등록 (안 하면 지도가 조용히 안 뜹니다)
+3. 앱 키 중 **JavaScript 키**를 복사해서 `.env`의 `VITE_KAKAO_MAP_APP_KEY`와, Vercel 프로젝트 환경변수에도 동일하게 등록
+4. 개발자 계정에서 이 앱이 **첫 번째로 활성화한 앱**이면 무료 쿼터(지도 SDK 기준 일 30만 건)가 자동 적용되어 결제수단 등록 없이 사용 가능
 
 ## 메모
 

@@ -4,6 +4,8 @@ import { MOODS, STAMPS } from "./constants";
 import { prettyTime } from "./utils";
 import SignedImage from "./SignedImage";
 import Avatar from "./Avatar";
+import PlacePicker from "./PlacePicker";
+import PhotoCarousel from "./PhotoCarousel";
 
 function hasAny(e) {
   return e && ((e.photos && e.photos.length) || e.note || e.schedule || e.mood || (e.stamps && e.stamps.length));
@@ -13,6 +15,7 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [mode, setMode] = useState(() => (hasAny(entry) ? "view" : "edit"));
+  const [showPicker, setShowPicker] = useState(false);
   const e = entry || {};
   const stamps = e.stamps || [];
   const photos = e.photos || [];
@@ -20,7 +23,13 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
   const who = (id) => people[id] || { emoji: "🙂", color: "#D98763", display_name: "?" };
   const myInfo = who(me);
 
-  const set = (patch) => saveEntry(date, patch);
+  const set = async (patch) => {
+    const { error } = await saveEntry(date, patch);
+    if (error) {
+      console.error("저장 실패:", error);
+      window.alert(`저장하지 못했어요: ${error.message}`);
+    }
+  };
 
   const toggleStamp = (k) => {
     const next = stamps.includes(k) ? stamps.filter((s) => s !== k) : [...stamps, k];
@@ -74,14 +83,7 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
             </div>
 
             {photos.length > 0 && (
-              <div style={S.viewPhotoGrid}>
-                {photos.map((p) => (
-                  <div key={p.id} style={S.photoItem}>
-                    <SignedImage path={p.storage_path} style={S.photoImg} />
-                    <span style={{ ...S.photoBy, background: who(p.uploaded_by).color }}>{who(p.uploaded_by).emoji}</span>
-                  </div>
-                ))}
-              </div>
+              <PhotoCarousel photos={photos} who={who} />
             )}
 
             {e.note && <p style={S.viewNote}>{e.note}</p>}
@@ -140,7 +142,21 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
       <div style={S.twoCol}>
         <div style={{ flex: 1 }}>
           <div style={S.fieldLabel}>장소</div>
-          <input style={S.input} placeholder="예: 성수동" defaultValue={e.place || ""} onBlur={(ev) => set({ place: ev.target.value })} />
+          <input key={e.place || ""} style={S.input} placeholder="예: 성수동" defaultValue={e.place || ""} onBlur={(ev) => set({ place: ev.target.value })} />
+          {!showPicker && (
+            <button style={S.placePickToggle} onClick={() => setShowPicker(true)}>📍 지도에서 선택</button>
+          )}
+          {showPicker && (
+            <PlacePicker
+              initialLat={e.place_lat}
+              initialLng={e.place_lng}
+              onCancel={() => setShowPicker(false)}
+              onPick={({ place, lat, lng }) => {
+                set({ place, place_lat: lat, place_lng: lng });
+                setShowPicker(false);
+              }}
+            />
+          )}
         </div>
         <div style={{ flex: 1 }}>
           <div style={S.fieldLabel}>오늘 먹은 것</div>

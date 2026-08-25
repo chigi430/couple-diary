@@ -299,6 +299,12 @@ end $$;
 
 alter table schedules add column if not exists end_time text;
 
+-- ────────────────────────────────────────────────
+-- 13) 장소 좌표 (지도에 핀으로 모아보기용)
+-- ────────────────────────────────────────────────
+alter table entries add column if not exists place_lat double precision;
+alter table entries add column if not exists place_lng double precision;
+
 -- ============================================================
 --  끝! "Success. No rows returned" 이 뜨면 정상입니다.
 -- ============================================================

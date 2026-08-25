@@ -4,9 +4,11 @@ import { STAMPS } from "./constants";
 import { prettyDate, prettyTime } from "./utils";
 import SignedImage from "./SignedImage";
 import Avatar from "./Avatar";
+import PlacesMap from "./PlacesMap";
 
 export default function Timeline({ byDate, people, onOpen }) {
-  const [view, setView] = useState("list"); // list | grid
+  const [view, setView] = useState("list"); // list | grid | map
+  const [mapOpen, setMapOpen] = useState(false);
 
   const dates = useMemo(
     () =>
@@ -21,6 +23,14 @@ export default function Timeline({ byDate, people, onOpen }) {
     [dates, byDate]
   );
 
+  const places = useMemo(
+    () =>
+      dates
+        .filter((k) => byDate[k].place_lat != null && byDate[k].place_lng != null)
+        .map((k) => ({ date: k, lat: byDate[k].place_lat, lng: byDate[k].place_lng, place: byDate[k].place })),
+    [dates, byDate]
+  );
+
   const who = (id) => people[id] || { emoji: "🙂", color: "#D98763", display_name: "?" };
 
   return (
@@ -32,9 +42,31 @@ export default function Timeline({ byDate, people, onOpen }) {
         <button style={{ ...S.segBtn, ...(view === "grid" ? S.segBtnOn : {}) }} onClick={() => setView("grid")}>
           추억 모아보기
         </button>
+        <button style={{ ...S.segBtn, ...(view === "map" ? S.segBtnOn : {}) }} onClick={() => setView("map")}>
+          지도
+        </button>
       </div>
 
-      {view === "list" ? (
+      {view === "map" ? (
+        places.length === 0 ? (
+          <div style={S.tlEmpty}>좌표가 있는 장소 기록이 없어요. 일기에서 "지도에서 선택"으로 장소를 찍어보세요.</div>
+        ) : (
+          <>
+            <button style={S.mapToggleBtn} onClick={() => setMapOpen((v) => !v)}>
+              🗺 {mapOpen ? "지도 접기" : "지도로 보기"}
+            </button>
+            {mapOpen && <PlacesMap places={places} onOpen={onOpen} />}
+            <div style={S.placeListWrap}>
+              {places.map((p) => (
+                <button key={p.date} style={S.placeListItem} onClick={() => onOpen(p.date)}>
+                  <span style={S.placeListDate}>{p.date.slice(5).replace("-", ".")}</span>
+                  <span style={S.placeListName}>📍 {p.place || "장소 미상"}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )
+      ) : view === "list" ? (
         dates.length === 0 ? (
           <div style={S.tlEmpty}>아직 기록이 없어요.</div>
         ) : (

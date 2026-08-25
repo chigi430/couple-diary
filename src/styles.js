@@ -4,6 +4,8 @@ export const css = `
 * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 html, body { margin:0; padding:0; }
 input, textarea, button { font-family: inherit; }
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
 `;
 
 export const S = {
@@ -95,7 +97,7 @@ export const S = {
   tabIcon: { fontSize: 15, lineHeight: 1 },
 
   overlay: { position: "fixed", inset: 0, background: "rgba(58,34,28,0.42)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 60, animation: "fadeIn .18s ease", backdropFilter: "blur(2px)" },
-  sheet: { width: "100%", maxWidth: 460, background: "#FFFDFB", borderRadius: "26px 26px 0 0", padding: "10px 20px 26px", maxHeight: "90vh", overflowY: "auto", animation: "sheetUp .26s cubic-bezier(.2,.8,.2,1)" },
+  sheet: { width: "100%", maxWidth: 460, background: "#FFFDFB", borderRadius: "26px 26px 0 0", padding: "10px 20px 26px", minHeight: "100vh", maxHeight: "100vh", overflowY: "auto", animation: "sheetUp .26s cubic-bezier(.2,.8,.2,1)" },
   sheetHandle: { width: 40, height: 4, borderRadius: 4, background: "#E7D9CF", margin: "6px auto 14px" },
   sheetHead: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 },
   sheetDate: { fontSize: 18, fontWeight: 800, color: "#5A2A3A", letterSpacing: "-0.02em", display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 },
@@ -190,11 +192,33 @@ export const S = {
   viewNote: { fontSize: 14.5, color: "#4A3A34", lineHeight: 1.7, whiteSpace: "pre-wrap", margin: "0 0 14px" },
   viewEmpty: { fontSize: 13, color: "#B4A69D", padding: "8px 2px 4px" },
   viewPhotoGrid: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4 },
+  carouselWrap: { marginBottom: 10 },
+  carouselScroll: { display: "flex", overflowX: "auto", scrollSnapType: "x mandatory", borderRadius: 18, WebkitOverflowScrolling: "touch" },
+  carouselSlide: { flex: "0 0 100%", scrollSnapAlign: "start", position: "relative", aspectRatio: "1", background: "#F4EAE3" },
+  carouselImg: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
+  carouselDots: { display: "flex", justifyContent: "center", gap: 6, marginTop: 8 },
+  carouselDot: { width: 6, height: 6, borderRadius: 3, background: "#E7D9CF", transition: "width .15s, background .15s" },
+  carouselDotOn: { width: 16, background: "#D98763" },
   viewActionsRow: { display: "flex", justifyContent: "flex-end", marginTop: 16 },
 
   // 달력 - 주간 일정 막대 스트립 (day cell 그리드 바로 아래)
   weekBarsWrap: { position: "relative", marginBottom: 6 },
   weekBar: { position: "absolute", height: 17, borderRadius: 6, fontSize: 9.5, fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", paddingLeft: 5, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", cursor: "pointer" },
+
+  // 장소 지도
+  placePickToggle: { border: "1px solid #F0E4DB", background: "#FBF5F1", color: "#B0553B", fontSize: 12, fontWeight: 700, padding: "8px 12px", borderRadius: 10, cursor: "pointer", marginTop: 6 },
+  placePickBox: { marginTop: 8, borderRadius: 12, overflow: "hidden", border: "1px solid #F0E4DB" },
+  placePickMap: { width: "100%", height: 180 },
+  placePickHint: { fontSize: 11.5, color: "#A8968D", padding: "8px 10px", background: "#FBF5F1" },
+  placePickConfirmRow: { display: "flex", gap: 6, padding: "8px 10px", background: "#FBF5F1" },
+  mapBox: { borderRadius: 18, overflow: "hidden", border: "1px solid #F0E4DB" },
+  mapCanvas: { width: "100%", height: 420 },
+  mapErrorBox: { textAlign: "center", padding: "40px 16px", color: "#B4A69D", fontSize: 13, lineHeight: 1.6 },
+  mapToggleBtn: { width: "100%", padding: "12px", border: "1px solid #EAD9CE", borderRadius: 12, background: "#fff", color: "#B06A50", fontSize: 13.5, fontWeight: 700, cursor: "pointer", marginBottom: 10 },
+  placeListWrap: { display: "flex", flexDirection: "column", gap: 6 },
+  placeListItem: { display: "flex", alignItems: "center", gap: 10, background: "#fff", borderRadius: 14, padding: "12px 14px", border: "none", width: "100%", textAlign: "left", cursor: "pointer", boxShadow: "0 4px 12px rgba(122,74,60,0.06)" },
+  placeListDate: { fontSize: 11.5, fontWeight: 700, color: "#B4A69D", minWidth: 44 },
+  placeListName: { fontSize: 13.5, color: "#4A3A34" },
 
   // day-tap 팝업 - 일정보기 탭 / 폼
   schedByRow: { display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "#A8968D", margin: "4px 0 2px" },
