@@ -1,9 +1,13 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { S } from "./styles";
 import { EMOJI_CHOICES, COLOR_CHOICES } from "./constants";
 import { compressImage, uuid } from "./utils";
+import { pushSupported, isPushSubscribed, subscribePush, unsubscribePush } from "./push";
 import Avatar from "./Avatar";
+
+const IS_IOS = /iP(hone|od|ad)/.test(navigator.userAgent);
+const IS_STANDALONE = window.navigator.standalone || window.matchMedia("(display-mode: standalone)").matches;
 
 export default function Settings({ profile, onSaved, onSignOut }) {
   const fileRef = useRef(null);
@@ -15,6 +19,53 @@ export default function Settings({ profile, onSaved, onSignOut }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [saved, setSaved] = useState(false);
+  const [pushOn, setPushOn] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushMsg, setPushMsg] = useState("");
+
+  useEffect(() => {
+    if (!pushSupported()) return;
+    isPushSubscribed().then(setPushOn);
+  }, []);
+
+  const togglePush = async () => {
+    setPushBusy(true);
+    setPushMsg("");
+    try {
+      if (pushOn) {
+        await unsubscribePush();
+        setPushOn(false);
+      } else {
+        const perm = await Notification.requestPermission();
+        if (perm !== "granted") {
+          setPushMsg("알림 권한이 필요해요.");
+          return;
+        }
+        await subscribePush(profile.id);
+        setPushOn(true);
+      }
+    } catch (e) {
+      setPushMsg(e.message);
+    } finally {
+      setPushBusy(false);
+    }
+  };
+
+  const sendTestPush = async () => {
+    setPushBusy(true);
+    setPushMsg("");
+    try {
+      const { error } = await supabase.functions.invoke("send-push", {
+        body: { user_ids: [profile.id], title: "테스트 알림", body: "잘 도착하나요? 🔔", url: "/" },
+      });
+      if (error) throw error;
+      setPushMsg("전송했어요. 잠시 후 알림을 확인해보세요.");
+    } catch (e) {
+      setPushMsg(e.message);
+    } finally {
+      setPushBusy(false);
+    }
+  };
 
   const onPickAvatar = async (ev) => {
     const file = ev.target.files && ev.target.files[0];
@@ -40,6 +91,23 @@ export default function Settings({ profile, onSaved, onSignOut }) {
     } finally {
       setUploading(false);
     }
+  };
+
+  const leaveCouple = async () => {
+    const ok = window.confirm(
+      "정말 커플 연결을 해제할까요?\n\n" +
+        "내 계정만 이 커플 공간에서 빠져나가요. 지금까지 쌓인 기록은 삭제되지 않고 그대로 남아있고, 나중에 상대에게 새 초대코드를 받으면 다시 들어올 수 있어요."
+    );
+    if (!ok) return;
+    setErr("");
+    setBusy(true);
+    const { error } = await supabase.from("profiles").update({ couple_id: null }).eq("id", profile.id);
+    setBusy(false);
+    if (error) {
+      setErr(error.message);
+      return;
+    }
+    await onSaved();
   };
 
   const save = async () => {
@@ -99,11 +167,42 @@ export default function Settings({ profile, onSaved, onSignOut }) {
           </div>
         </div>
 
+        {pushSupported() ? (
+          <div style={S.authField}>
+            <label style={S.authLabel}>알림</label>
+            <div style={S.toggleRow}>
+              <span style={S.toggleLabel}>상대방 소식 알림 받기</span>
+              <button
+                style={{ ...S.toggleSwitch, background: pushOn ? "#D98763" : "#E7D9CF", opacity: pushBusy ? 0.7 : 1 }}
+                onClick={togglePush}
+                disabled={pushBusy}
+              >
+                <span style={{ ...S.toggleKnob, left: pushOn ? 21 : 3 }} />
+              </button>
+            </div>
+            {IS_IOS && !IS_STANDALONE && (
+              <div style={S.authSub}>iOS에서 알림을 받으려면 먼저 공유 → 홈 화면에 추가로 앱을 설치해주세요.</div>
+            )}
+            {pushOn && (
+              <button style={S.smallActionBtn} onClick={sendTestPush} disabled={pushBusy}>
+                테스트 알림 보내기
+              </button>
+            )}
+            {pushMsg && <div style={S.authSub}>{pushMsg}</div>}
+          </div>
+        ) : (
+          <div style={S.authField}>
+            <label style={S.authLabel}>알림</label>
+            <div style={S.authSub}>이 브라우저는 푸시 알림을 지원하지 않아요.</div>
+          </div>
+        )}
+
         <button style={{ ...S.saveBtn, opacity: busy ? 0.7 : 1 }} onClick={save} disabled={busy}>
           {busy ? "저장 중…" : saved ? "저장됨 ✓" : "저장하기"}
         </button>
 
         <button style={S.settingsSignOut} onClick={onSignOut}>로그아웃</button>
+        <button style={S.settingsDanger} onClick={leaveCouple} disabled={busy}>커플 연결 해제</button>
       </div>
     </div>
   );

@@ -23,6 +23,13 @@ export default function App() {
 
   const [tab, setTab] = useState("today");
   const [selected, setSelected] = useState(null);
+  const [nowTick, setNowTick] = useState(Date.now());
+
+  // 초대코드 만료 표시 갱신용
+  useEffect(() => {
+    const t = setInterval(() => setNowTick(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
 
   // 세션 감시
   useEffect(() => {
@@ -89,6 +96,11 @@ export default function App() {
     await supabase.auth.signOut();
   };
 
+  const regenerateCode = async () => {
+    const { error } = await supabase.rpc("regenerate_invite_code");
+    if (!error) await loadProfile();
+  };
+
   const setAnniversary = async () => {
     const val = window.prompt("사귀기 시작한 날을 입력하세요 (예: 2025-03-14)", couple?.anniversary_date || "");
     if (val === null) return;
@@ -110,6 +122,9 @@ export default function App() {
   const anni = anniversaryInfo(couple?.anniversary_date);
   const memberCount = Object.keys(people).length;
   const meInfo = people[userId] || profile || {};
+  const inviteExpiresAt = couple?.invite_code_expires_at ? new Date(couple.invite_code_expires_at).getTime() : null;
+  const inviteExpired = inviteExpiresAt !== null && inviteExpiresAt <= nowTick;
+  const inviteMinsLeft = inviteExpiresAt !== null ? Math.max(0, Math.ceil((inviteExpiresAt - nowTick) / 60000)) : null;
 
   return (
     <div style={S.root}>
@@ -135,11 +150,20 @@ export default function App() {
       {/* 상대가 아직 참여 안 했으면 초대코드 안내 */}
       {memberCount < 2 && couple?.invite_code && (
         <div style={S.inviteBanner}>
-          <div style={S.inviteText}>
-            상대를 초대하세요<br />
-            <span style={S.inviteCode}>{couple.invite_code}</span>
-          </div>
-          <button style={S.copyBtn} onClick={() => navigator.clipboard?.writeText(couple.invite_code)}>코드 복사</button>
+          {inviteExpired ? (
+            <>
+              <div style={S.inviteText}>초대코드가 만료됐어요 (1시간 유효)</div>
+              <button style={S.copyBtn} onClick={regenerateCode}>새 코드 받기</button>
+            </>
+          ) : (
+            <>
+              <div style={S.inviteText}>
+                상대를 초대하세요 · {inviteMinsLeft}분 후 만료<br />
+                <span style={S.inviteCode}>{couple.invite_code}</span>
+              </div>
+              <button style={S.copyBtn} onClick={() => navigator.clipboard?.writeText(couple.invite_code)}>코드 복사</button>
+            </>
+          )}
         </div>
       )}
 

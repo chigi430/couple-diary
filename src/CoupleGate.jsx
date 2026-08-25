@@ -35,8 +35,10 @@ export default function CoupleGate({ onDone, onSignOut }) {
     try {
       const { data, error } = await supabase.rpc("join_couple", { code: code.trim() });
       if (error) throw error;
-      if (data === true) {
+      if (data === "ok") {
         onDone();
+      } else if (data === "expired") {
+        setErr("이 코드는 유효기간(1시간)이 지났어요. 상대에게 새 코드를 다시 받아주세요.");
       } else {
         setErr("코드를 찾을 수 없어요. 다시 확인해주세요.");
       }

@@ -246,4 +246,5 @@ export const S = {
   avatarPickBtn: { position: "relative", cursor: "pointer", border: "none", background: "none", padding: 0 },
   avatarEditBadge: { position: "absolute", right: -2, bottom: -2, width: 26, height: 26, borderRadius: "50%", background: "#D98763", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, border: "2px solid #fff" },
   settingsSignOut: { width: "100%", marginTop: 18, padding: "13px", border: "1px solid #F0E4DB", borderRadius: 12, background: "#fff", color: "#B4A69D", fontSize: 13.5, fontWeight: 700, cursor: "pointer" },
+  settingsDanger: { width: "100%", marginTop: 10, padding: "13px", border: "1px solid #F5D6D2", borderRadius: 12, background: "#fff", color: "#C0392B", fontSize: 13.5, fontWeight: 700, cursor: "pointer" },
 };

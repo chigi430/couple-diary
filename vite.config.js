@@ -6,11 +6,15 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.js",
+      injectManifest: {},
       registerType: "autoUpdate",
       includeAssets: ["apple-touch-icon.png"],
-      workbox: {
-        skipWaiting: true,
-        clientsClaim: true,
+      devOptions: {
+        enabled: true,
+        type: "module",
       },
       manifest: {
         name: "오늘의 우리",

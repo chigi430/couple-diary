@@ -17,6 +17,7 @@
 - **지도**: 카카오맵 JS SDK (다녀온 장소 핀 기록/모아보기)
 - **개발 환경**: Windows
 - **배포**: GitHub(Public, `chigi430/couple-diary`) → Vercel 자동 배포 (main 브랜치 push 시)
+- **배포 주소**: https://couple-diary-cyan.vercel.app
 
 ## 핵심 기능 (구현 완료)
 
@@ -25,14 +26,27 @@
 - 같은 달력에 TimeTree 스타일 일정 막대 표시 + day-tap 팝업에서 "일정보기"/"오늘의 우리" 탭 전환
 - 타임라인 탭: 목록 / 추억 모아보기(그리드) / 지도(다녀온 곳 요약 + 접이식 지도) 3가지 보기
 - 설정 탭: 프로필 사진 업로드, 이름/이모지/색 변경, 로그아웃
+- 스탬프/태그: 일기에 데이트·여행·영화·맛집·집콕·선물·기념일·투닥 스탬프 붙이기 (달력·타임라인·오늘 화면에 표시)
 - PWA (홈 화면에 앱처럼 설치 가능)
 - 사진은 클라이언트 리사이즈·압축 후 비공개 버킷 저장 + 서명 URL 조회
 - 실시간 공유 (Supabase Realtime)
+- 초대코드 1시간 만료 + 재발급
+- 푸시 알림: 상대방 일기/사진/일정 작성 시, 커플 연결 시 즉시 알림 + 매일 저녁 9시 미작성 리마인더 + 기념일/D-day(매년·100일 단위) 알림 (자세한 구조는 아래 "푸시 알림 구조" 참고)
 
 ## 앞으로 할 일 (TODO)
 
 - 공휴일 데이터(`src/constants.js`, 현재 2026년 예시)를 공공데이터포털 API로 자동화할지 검토
+- PWA 아이콘(`public/pwa-192x192.png`, `pwa-512x512.png`, `apple-touch-icon.png`)이 아직 임시 도형이라 실제 로고로 교체 필요
 - (아이디어만 논의, 미착수) 그룹/단체용으로 확장 — 한 사람이 여러 그룹에 속하는 구조로 바꿔야 함
+
+## 푸시 알림 구조
+
+- **프론트**: `src/sw.js`(커스텀 서비스워커, push/notificationclick 처리) + `src/push.js`(구독 생성/해제) + `Settings.jsx`의 알림 토글. `vite-plugin-pwa`는 `injectManifest` 전략 사용 중(커스텀 SW를 넣으려면 이 방식이 필요).
+- **구독 저장**: `push_subscriptions` 테이블 (기기당 1행).
+- **발송**: Supabase Edge Function `supabase/functions/send-push` (VAPID 웹푸시), `supabase/functions/daily-check`(매일 저녁 9시 기념일/리마인더 판단).
+- **트리거**: `supabase-setup.sql` 16번 섹션 — 일기/사진/일정 insert, `join_couple()` 성공 시 `pg_net`으로 `send-push` 호출. 17번 섹션 — `pg_cron`이 매일 21시(KST)에 `daily-check` 호출.
+- **비밀값**: VAPID 비밀키·CRON_SECRET은 Supabase Edge Function secrets로, `send-push` 호출 URL/시크릿은 Supabase Vault(`vault.decrypted_secrets`)로 관리. 전부 git에는 안 올라감.
+- Edge Function을 수정했으면 `npx supabase functions deploy <이름> --no-verify-jwt`로 재배포 필요 (수정만으로는 자동 반영 안 됨).
 
 ## 다른 PC에서 이어서 작업하기
 
@@ -43,9 +57,10 @@
 3. `.env.example`을 복사해서 `.env`로 만들고 실제 값 채우기:
    - `VITE_SUPABASE_URL`, `VITE_SUPABASE_KEY` — Supabase 대시보드 → Settings → API Keys
    - `VITE_KAKAO_MAP_APP_KEY` — Kakao Developers → 내 애플리케이션 → 앱 키 → JavaScript 키
+   - `VITE_VAPID_PUBLIC_KEY` — 푸시 알림용 공개키. 기존에 생성해둔 값이 있으면 그걸 그대로 쓰면 되고(비밀키와 짝이 맞아야 하므로 새로 만들면 안 됨), 안 가지고 있으면 물어볼 것.
 4. `npm run dev`로 실행
 
-Supabase/Vercel/Kakao 설정은 전부 클라우드에 이미 되어 있어서 추가 설정 없이 그대로 이어짐 (Kakao Web 플랫폼 도메인에 `http://localhost:5173`이 등록돼 있어 포트만 같으면 어느 PC에서든 지도 기능도 동작).
+Supabase/Vercel/Kakao 설정은 전부 클라우드에 이미 되어 있어서 추가 설정 없이 그대로 이어짐 (Kakao Web 플랫폼 도메인에 `http://localhost:5173`이 등록돼 있어 포트만 같으면 어느 PC에서든 지도 기능도 동작). Edge Function 배포/시크릿 설정도 클라우드 쪽이라 새 PC에서 다시 할 필요 없음 — 다만 Edge Function 코드를 새 PC에서 수정해서 재배포하려면 그 PC에서 `npx supabase login` → `npx supabase link --project-ref heksenfpxztwwstbqkll` 한 번은 해줘야 함.
 
 ## 작업 시 지켜줄 것
 
@@ -58,3 +73,4 @@ Supabase/Vercel/Kakao 설정은 전부 클라우드에 이미 되어 있어서 �
 ## 환경변수 (참고)
 
 - `.env`는 `.gitignore`에 포함되어 git에 올라가지 않음. 값은 `.env.example` 형식 참고.
+- Edge Function 쪽 비밀값(VAPID 비밀키, CRON_SECRET)은 `.env`가 아니라 `npx supabase secrets set`으로 클라우드에 저장되어 있음. 로컬에는 존재하지 않으니 다시 확인하려면 Supabase 대시보드 → Edge Functions → Secrets에서 볼 것 (값 자체는 대시보드에서도 마스킹되어 안 보임, 재설정만 가능).

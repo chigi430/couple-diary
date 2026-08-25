@@ -112,27 +112,6 @@ begin
 end
 $$;
 
-create or replace function public.join_couple(code text)
-returns boolean
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  target uuid;
-begin
-  select id into target from public.couples
-  where invite_code = upper(trim(code));
-
-  if target is null then
-    return false;
-  end if;
-
-  update public.profiles set couple_id = target where id = auth.uid();
-  return true;
-end
-$$;
-
 -- ────────────────────────────────────────────────
 -- 5) 보안 (Row Level Security) — "내 커플 데이터만"
 -- ────────────────────────────────────────────────
@@ -304,6 +283,244 @@ alter table schedules add column if not exists end_time text;
 -- ────────────────────────────────────────────────
 alter table entries add column if not exists place_lat double precision;
 alter table entries add column if not exists place_lng double precision;
+
+-- ────────────────────────────────────────────────
+-- 14) 초대코드 만료 (1시간) + 재발급
+-- ────────────────────────────────────────────────
+alter table couples add column if not exists invite_code_expires_at timestamptz not null default (now() + interval '1 hour');
+
+create or replace function public.create_couple(anniversary date default null)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  new_id uuid;
+  code   text;
+begin
+  insert into public.couples (anniversary_date, invite_code_expires_at)
+  values (anniversary, now() + interval '1 hour')
+  returning id, invite_code into new_id, code;
+
+  update public.profiles set couple_id = new_id where id = auth.uid();
+  return code;
+end
+$$;
+
+-- join_couple: 'ok' | 'invalid' | 'expired' 로 결과를 구분해서 반환
+drop function if exists public.join_couple(text);
+create or replace function public.join_couple(code text)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  target     uuid;
+  expires_at timestamptz;
+begin
+  select id, invite_code_expires_at into target, expires_at
+  from public.couples
+  where invite_code = upper(trim(code));
+
+  if target is null then
+    return 'invalid';
+  end if;
+
+  if expires_at < now() then
+    return 'expired';
+  end if;
+
+  update public.profiles set couple_id = target where id = auth.uid();
+  return 'ok';
+end
+$$;
+
+-- regenerate_invite_code: 아직 파트너가 없을 때(1인)만 새 코드 발급
+create or replace function public.regenerate_invite_code()
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  cid       uuid;
+  new_code  text;
+  members   int;
+begin
+  cid := public.my_couple_id();
+  if cid is null then
+    raise exception '커플 공간이 없어요.';
+  end if;
+
+  select count(*) into members from public.profiles where couple_id = cid;
+  if members >= 2 then
+    raise exception '이미 상대방과 연결되어 있어요.';
+  end if;
+
+  new_code := upper(substr(md5(random()::text), 1, 6));
+  update public.couples
+  set invite_code = new_code, invite_code_expires_at = now() + interval '1 hour'
+  where id = cid;
+
+  return new_code;
+end
+$$;
+
+-- ────────────────────────────────────────────────
+-- 15) 푸시 알림 구독 (기기별로 1행씩 저장)
+-- ────────────────────────────────────────────────
+create table if not exists push_subscriptions (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  endpoint   text not null unique,
+  p256dh     text not null,
+  auth_key   text not null,
+  user_agent text,
+  created_at timestamptz default now()
+);
+alter table push_subscriptions enable row level security;
+
+drop policy if exists "own push subscriptions" on push_subscriptions;
+create policy "own push subscriptions" on push_subscriptions
+  for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- ────────────────────────────────────────────────
+-- 16) 이벤트 알림 (일기·사진·일정·커플연결 시 상대방에게 푸시)
+--     실제 vault 시크릿(edge_function_base_url / edge_function_secret)은
+--     이 파일에 커밋하지 않고 SQL 에디터에서 1회성으로 등록합니다:
+--       select vault.create_secret('https://<project-ref>.supabase.co/functions/v1', 'edge_function_base_url');
+--       select vault.create_secret('<CRON_SECRET 값>', 'edge_function_secret');
+-- ────────────────────────────────────────────────
+create extension if not exists pg_net with schema extensions;
+
+create or replace function public.notify_partner(p_couple_id uuid, p_actor uuid, p_title text, p_body text, p_url text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  partner_id uuid;
+  base_url   text;
+  secret     text;
+begin
+  select id into partner_id from public.profiles
+   where couple_id = p_couple_id and id <> p_actor;
+  if partner_id is null then return; end if;
+
+  select decrypted_secret into base_url from vault.decrypted_secrets where name = 'edge_function_base_url';
+  select decrypted_secret into secret   from vault.decrypted_secrets where name = 'edge_function_secret';
+  if base_url is null or secret is null then return; end if;
+
+  perform net.http_post(
+    url := base_url || '/send-push',
+    headers := jsonb_build_object('Content-Type', 'application/json', 'x-cron-secret', secret),
+    body := jsonb_build_object('user_ids', jsonb_build_array(partner_id), 'title', p_title, 'body', p_body, 'url', p_url)
+  );
+end;
+$$;
+
+-- 일기 작성/수정 (note 필드가 실제로 바뀐 경우에만)
+create or replace function public.trg_notify_entry() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if new.note is null or new.note = '' then return new; end if;
+  if TG_OP = 'UPDATE' and old.note is not distinct from new.note then return new; end if;
+  perform public.notify_partner(new.couple_id, new.note_by,
+    coalesce((select display_name from public.profiles where id = new.note_by), '상대방') || '님이 오늘 일기를 남겼어요',
+    left(new.note, 80), '/?date=' || new.date);
+  return new;
+end $$;
+drop trigger if exists on_entry_note_change on entries;
+create trigger on_entry_note_change after insert or update on entries
+  for each row execute function public.trg_notify_entry();
+
+-- 사진 업로드
+create or replace function public.trg_notify_photo() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  perform public.notify_partner(new.couple_id, new.uploaded_by,
+    coalesce((select display_name from public.profiles where id = new.uploaded_by), '상대방') || '님이 사진을 올렸어요',
+    '', '/?date=' || (select date from public.entries where id = new.entry_id));
+  return new;
+end $$;
+drop trigger if exists on_photo_insert on photos;
+create trigger on_photo_insert after insert on photos
+  for each row execute function public.trg_notify_photo();
+
+-- 일정 추가
+create or replace function public.trg_notify_schedule() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  perform public.notify_partner(new.couple_id, new.user_id,
+    coalesce((select display_name from public.profiles where id = new.user_id), '상대방') || '님이 일정을 추가했어요: ' || new.title,
+    '', '/?date=' || new.start_date);
+  return new;
+end $$;
+drop trigger if exists on_schedule_insert on schedules;
+create trigger on_schedule_insert after insert on schedules
+  for each row execute function public.trg_notify_schedule();
+
+-- join_couple: 참여 성공 시 상대방(초대자)에게 연결 알림 추가
+drop function if exists public.join_couple(text);
+create or replace function public.join_couple(code text)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  target      uuid;
+  expires_at  timestamptz;
+  joiner_name text;
+begin
+  select id, invite_code_expires_at into target, expires_at
+  from public.couples
+  where invite_code = upper(trim(code));
+
+  if target is null then
+    return 'invalid';
+  end if;
+
+  if expires_at < now() then
+    return 'expired';
+  end if;
+
+  select display_name into joiner_name from public.profiles where id = auth.uid();
+  update public.profiles set couple_id = target where id = auth.uid();
+
+  perform public.notify_partner(target, auth.uid(),
+    coalesce(joiner_name, '상대방') || '님과 연결됐어요! 🎉', '이제 함께 기록해요', '/');
+
+  return 'ok';
+end
+$$;
+
+-- ────────────────────────────────────────────────
+-- 17) 매일 저녁 9시(KST) 스케줄 알림 (기념일/D-day + 미작성 리마인더)
+--     Edge Function daily-check 가 실제 판단 로직을 담당하고,
+--     여기서는 매일 정해진 시간에 "호출만" 합니다.
+-- ────────────────────────────────────────────────
+create extension if not exists pg_cron with schema extensions;
+
+do $$
+begin
+  perform cron.unschedule('daily-check');
+exception when others then null;
+end $$;
+
+select cron.schedule(
+  'daily-check',
+  '0 12 * * *', -- UTC 12:00 = KST 21:00 (한국은 DST 없어 연중 고정)
+  $cron$
+  select net.http_post(
+    url := (select decrypted_secret from vault.decrypted_secrets where name = 'edge_function_base_url') || '/daily-check',
+    headers := jsonb_build_object('x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'edge_function_secret'))
+  );
+  $cron$
+);
 
 -- ============================================================
 --  끝! "Success. No rows returned" 이 뜨면 정상입니다.
