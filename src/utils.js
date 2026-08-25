@@ -17,6 +17,10 @@ export const prettyDate = (str) => {
   const d = parseDate(str);
   return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${DOW[d.getDay()]})`;
 };
+export const prettyTime = (iso) => {
+  if (!iso) return "";
+  return new Date(iso).toLocaleTimeString("ko-KR", { hour: "numeric", minute: "2-digit" });
+};
 
 // 기념일 계산: 함께한 날수 + 다음 100일 / 다음 주년 D-day
 export function anniversaryInfo(anniversary) {

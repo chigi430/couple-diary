@@ -89,10 +89,10 @@ export const S = {
   recentImg: { width: 76, height: 76, objectFit: "cover", borderRadius: 14, display: "block" },
   recentDate: { fontSize: 11, color: "#A8968D", marginTop: 5, display: "block", textAlign: "center" },
 
-  tabbar: { position: "fixed", left: "50%", transform: "translateX(-50%)", bottom: 16, width: "min(92%,340px)", background: "rgba(255,255,255,0.92)", backdropFilter: "blur(10px)", borderRadius: 20, display: "flex", padding: 6, boxShadow: "0 8px 26px rgba(122,74,60,0.16)", zIndex: 40 },
-  tabBtn: { flex: 1, border: "none", background: "none", padding: "9px", borderRadius: 15, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, fontSize: 11.5, fontWeight: 700, color: "#B4A69D", cursor: "pointer" },
+  tabbar: { position: "fixed", left: "50%", transform: "translateX(-50%)", bottom: 16, width: "min(94%,400px)", background: "rgba(255,255,255,0.92)", backdropFilter: "blur(10px)", borderRadius: 20, display: "flex", padding: 6, boxShadow: "0 8px 26px rgba(122,74,60,0.16)", zIndex: 40 },
+  tabBtn: { flex: 1, border: "none", background: "none", padding: "8px 2px", borderRadius: 15, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, fontSize: 10, fontWeight: 700, color: "#B4A69D", cursor: "pointer" },
   tabOn: { background: "linear-gradient(135deg,#FBE0D4,#F7D0BF)", color: "#B0553B" },
-  tabIcon: { fontSize: 16, lineHeight: 1 },
+  tabIcon: { fontSize: 15, lineHeight: 1 },
 
   overlay: { position: "fixed", inset: 0, background: "rgba(58,34,28,0.42)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 60, animation: "fadeIn .18s ease", backdropFilter: "blur(2px)" },
   sheet: { width: "100%", maxWidth: 460, background: "#FFFDFB", borderRadius: "26px 26px 0 0", padding: "10px 20px 26px", maxHeight: "90vh", overflowY: "auto", animation: "sheetUp .26s cubic-bezier(.2,.8,.2,1)" },
@@ -129,7 +129,8 @@ export const S = {
   textarea: { width: "100%", border: "1px solid #F0E4DB", background: "#FBF5F1", borderRadius: 12, padding: "12px 14px", fontSize: 14.5, color: "#3A2F2A", outline: "none", resize: "vertical", lineHeight: 1.6 },
   noteBy: { display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "#A8968D", marginTop: 7 },
 
-  saveBtn: { width: "100%", marginTop: 22, padding: "15px", border: "none", borderRadius: 14, background: "linear-gradient(135deg,#E0906C 0%, #C96F5B 100%)", color: "#fff", fontSize: 15.5, fontWeight: 800, cursor: "pointer", boxShadow: "0 8px 20px rgba(201,111,91,0.32)" },
+  saveBtn: { width: "100%", marginTop: 18, padding: "13px", border: "none", borderRadius: 13, background: "linear-gradient(135deg,#E0906C 0%, #C96F5B 100%)", color: "#fff", fontSize: 14.5, fontWeight: 800, cursor: "pointer", boxShadow: "0 6px 16px rgba(201,111,91,0.28)" },
+  smallActionBtn: { border: "1.5px solid #D98763", background: "#fff", color: "#B0553B", fontSize: 12.5, fontWeight: 700, cursor: "pointer", padding: "7px 14px", borderRadius: 10, whiteSpace: "nowrap" },
 
   // 인증/게이트 화면
   authWrap: { minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", maxWidth: 380, margin: "0 auto", padding: "0 24px" },
@@ -155,4 +156,70 @@ export const S = {
   codeBig: { fontSize: 30, fontWeight: 800, letterSpacing: "0.2em", color: "#B0553B", textAlign: "center", padding: "16px 0", background: "#FFF6E9", borderRadius: 14, margin: "6px 0 4px" },
 
   center: { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#B4A69D", fontSize: 14 },
+
+  // 타임라인
+  segRow: { display: "flex", background: "#F7EDE7", borderRadius: 14, padding: 4, marginBottom: 16 },
+  segBtn: { flex: 1, border: "none", background: "none", padding: "9px 0", borderRadius: 11, fontSize: 13, fontWeight: 700, color: "#B4A69D", cursor: "pointer" },
+  segBtnOn: { background: "#fff", color: "#B0553B", boxShadow: "0 2px 8px rgba(122,74,60,0.12)" },
+
+  tlEmpty: { textAlign: "center", padding: "40px 0", color: "#B4A69D", fontSize: 13.5 },
+
+  tlCard: { display: "flex", gap: 12, background: "#fff", borderRadius: 18, padding: 14, marginBottom: 10, boxShadow: "0 6px 18px rgba(122,74,60,0.08)", border: "none", width: "100%", textAlign: "left", cursor: "pointer" },
+  tlThumb: { width: 60, height: 60, borderRadius: 12, objectFit: "cover", flexShrink: 0 },
+  tlNoThumb: { width: 60, height: 60, borderRadius: 12, background: "#FBF5F1", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 },
+  tlBody: { flex: 1, minWidth: 0 },
+  tlTopRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, marginBottom: 4 },
+  tlDate: { fontSize: 13, fontWeight: 800, color: "#4A3A34" },
+  tlMood: { fontSize: 14 },
+  tlByRow: { display: "flex", alignItems: "center", gap: 5, fontSize: 11.5, color: "#A8968D", marginBottom: 4 },
+  tlByTime: { color: "#C0B2A8" },
+  tlNote: { fontSize: 13, color: "#7A6A62", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" },
+  tlChips: { display: "flex", flexWrap: "wrap", gap: 5, marginTop: 6 },
+  tlChip: { fontSize: 10.5, background: "#FBF0EA", color: "#8A6A5C", padding: "3px 8px", borderRadius: 8 },
+
+  memGrid: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6 },
+  memCell: { border: "none", background: "none", padding: 0, cursor: "pointer", borderRadius: 12, overflow: "hidden", position: "relative", aspectRatio: "1" },
+  memImg: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
+  memDateTag: { position: "absolute", left: 5, bottom: 5, fontSize: 9.5, fontWeight: 700, color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.5)" },
+
+  // 프로필 수정
+  profileHead: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
+
+  // EntrySheet 보기 모드
+  viewMetaRow: { display: "flex", flexWrap: "wrap", gap: 6, margin: "4px 0 12px" },
+  viewNote: { fontSize: 14.5, color: "#4A3A34", lineHeight: 1.7, whiteSpace: "pre-wrap", margin: "0 0 14px" },
+  viewEmpty: { fontSize: 13, color: "#B4A69D", padding: "8px 2px 4px" },
+  viewPhotoGrid: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4 },
+  viewActionsRow: { display: "flex", justifyContent: "flex-end", marginTop: 16 },
+
+  // 달력 - 주간 일정 막대 스트립 (day cell 그리드 바로 아래)
+  weekBarsWrap: { position: "relative", marginBottom: 6 },
+  weekBar: { position: "absolute", height: 17, borderRadius: 6, fontSize: 9.5, fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", paddingLeft: 5, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", cursor: "pointer" },
+
+  // day-tap 팝업 - 일정보기 탭 / 폼
+  schedByRow: { display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "#A8968D", margin: "4px 0 2px" },
+  schedAddFab: { border: "none", background: "#D98763", color: "#fff", width: 34, height: 34, borderRadius: 12, fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(217,135,99,0.35)" },
+  schedList: { display: "flex", flexDirection: "column", gap: 8, marginTop: 14 },
+  schedItem: { display: "flex", alignItems: "center", gap: 10, background: "#FBF5F1", borderRadius: 14, padding: "11px 12px", border: "none", width: "100%", textAlign: "left", cursor: "pointer" },
+  schedItemBar: { width: 4, alignSelf: "stretch", borderRadius: 3 },
+  schedItemTime: { fontSize: 11.5, fontWeight: 700, color: "#B0553B", minWidth: 66 },
+  schedItemTitle: { flex: 1, fontSize: 13.5, color: "#4A3A34" },
+
+  toggleRow: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 2px" },
+  toggleLabel: { fontSize: 14, fontWeight: 700, color: "#5A4A42" },
+  toggleSwitch: { width: 44, height: 26, borderRadius: 13, border: "none", cursor: "pointer", position: "relative", transition: "background .15s" },
+  toggleKnob: { position: "absolute", top: 3, width: 20, height: 20, borderRadius: "50%", background: "#fff", transition: "left .15s", boxShadow: "0 1px 3px rgba(0,0,0,0.25)" },
+  dateRangeRow: { display: "flex", alignItems: "center", gap: 8 },
+  dateRangeSep: { color: "#B4A69D", fontSize: 13 },
+  deleteBtn: { width: "100%", marginTop: 8, padding: "10px", border: "none", borderRadius: 11, background: "#FDECEA", color: "#C0392B", fontSize: 13, fontWeight: 700, cursor: "pointer" },
+
+  // day-tap 팝업 (일정보기/오늘의 우리 2탭)
+  daySheetSubTabs: { marginBottom: 6 },
+
+  // 설정 탭
+  settingsCard: { background: "#fff", borderRadius: 24, padding: "22px 18px", boxShadow: "0 12px 34px rgba(122,74,60,0.10)" },
+  avatarPickWrap: { display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 20 },
+  avatarPickBtn: { position: "relative", cursor: "pointer", border: "none", background: "none", padding: 0 },
+  avatarEditBadge: { position: "absolute", right: -2, bottom: -2, width: 26, height: 26, borderRadius: "50%", background: "#D98763", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, border: "2px solid #fff" },
+  settingsSignOut: { width: "100%", marginTop: 18, padding: "13px", border: "1px solid #F0E4DB", borderRadius: 12, background: "#fff", color: "#B4A69D", fontSize: 13.5, fontWeight: 700, cursor: "pointer" },
 };

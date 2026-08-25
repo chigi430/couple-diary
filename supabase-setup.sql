@@ -211,6 +211,94 @@ begin
   end;
 end $$;
 
+-- ────────────────────────────────────────────────
+-- 9) 개인 일정 (각자 등록해서 서로 볼 수 있는 스케줄)
+-- ────────────────────────────────────────────────
+create table if not exists schedules (
+  id         uuid primary key default gen_random_uuid(),
+  couple_id  uuid not null references couples(id) on delete cascade,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  date       date not null,
+  time       text,
+  title      text not null,
+  created_at timestamptz default now()
+);
+alter table schedules enable row level security;
+
+drop policy if exists "couple schedules" on schedules;
+create policy "couple schedules" on schedules
+  for all using (couple_id = public.my_couple_id()) with check (couple_id = public.my_couple_id());
+
+do $$
+begin
+  begin
+    alter publication supabase_realtime add table schedules;
+  exception when duplicate_object then null;
+  end;
+end $$;
+
+-- ────────────────────────────────────────────────
+-- 10) 프로필 사진 (공개 버킷 — 서명 URL 불필요)
+-- ────────────────────────────────────────────────
+alter table profiles add column if not exists avatar_url text;
+
+insert into storage.buckets (id, name, public)
+values ('avatars', 'avatars', true)
+on conflict (id) do nothing;
+
+drop policy if exists "avatar public read" on storage.objects;
+create policy "avatar public read" on storage.objects
+  for select using (bucket_id = 'avatars');
+
+drop policy if exists "avatar own upload" on storage.objects;
+create policy "avatar own upload" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "avatar own update" on storage.objects;
+create policy "avatar own update" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "avatar own delete" on storage.objects;
+create policy "avatar own delete" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- ────────────────────────────────────────────────
+-- 11) 일정: 기간(시작~종료) + 종일 여부로 확장
+--     (TimeTree 스타일 막대 달력을 위해 단일 date → 기간으로 변경)
+-- ────────────────────────────────────────────────
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_name = 'schedules' and column_name = 'date'
+  ) then
+    alter table schedules rename column date to start_date;
+  end if;
+end $$;
+
+alter table schedules add column if not exists end_date date;
+update schedules set end_date = start_date where end_date is null;
+alter table schedules alter column end_date set not null;
+alter table schedules add column if not exists all_day boolean not null default true;
+
+-- ────────────────────────────────────────────────
+-- 12) 일정: 시간을 시작~종료 범위로 확장
+-- ────────────────────────────────────────────────
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_name = 'schedules' and column_name = 'time'
+  ) then
+    alter table schedules rename column time to start_time;
+  end if;
+end $$;
+
+alter table schedules add column if not exists end_time text;
+
 -- ============================================================
 --  끝! "Success. No rows returned" 이 뜨면 정상입니다.
 -- ============================================================

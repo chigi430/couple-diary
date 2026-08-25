@@ -3,11 +3,15 @@ import { supabase } from "./supabaseClient";
 import { S, css } from "./styles";
 import { anniversaryInfo } from "./utils";
 import { useEntries } from "./useEntries";
+import { useSchedules } from "./useSchedules";
 import Auth from "./Auth";
 import CoupleGate from "./CoupleGate";
 import Today from "./Today";
 import Calendar from "./Calendar";
-import EntrySheet from "./EntrySheet";
+import Timeline from "./Timeline";
+import DaySheet from "./DaySheet";
+import Settings from "./Settings";
+import Avatar from "./Avatar";
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -79,6 +83,7 @@ export default function App() {
   const coupleId = couple?.id || null;
   const userId = session?.user?.id || null;
   const { byDate, saveEntry, uploadPhotos, deletePhoto } = useEntries(coupleId, userId);
+  const { schedules, byDate: scheduleByDate, addSchedule, updateSchedule, deleteSchedule } = useSchedules(coupleId);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -118,8 +123,8 @@ export default function App() {
             <div style={S.brandSub}>함께 쌓아가는 날들</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
-            <div style={S.userChip}>
-              <span style={{ ...S.userDot, background: meInfo.color || "#D98763" }}>{meInfo.emoji || "🙂"}</span>
+            <div style={{ ...S.userChip, cursor: "pointer" }} onClick={() => setTab("settings")}>
+              <Avatar person={meInfo} size={24} />
               <span style={S.userName}>{meInfo.display_name || "나"}</span>
             </div>
             <button style={S.signOut} onClick={signOut}>로그아웃</button>
@@ -157,9 +162,18 @@ export default function App() {
       </div>
 
       {tab === "today" ? (
-        <Today byDate={byDate} onOpen={setSelected} />
+        <Today byDate={byDate} onOpen={(d) => setSelected({ date: d, initialTab: "diary" })} />
+      ) : tab === "calendar" ? (
+        <Calendar
+          byDate={byDate}
+          schedules={schedules}
+          people={people}
+          onOpen={(d) => setSelected({ date: d, initialTab: "schedule" })}
+        />
+      ) : tab === "timeline" ? (
+        <Timeline byDate={byDate} people={people} onOpen={(d) => setSelected({ date: d, initialTab: "diary" })} />
       ) : (
-        <Calendar byDate={byDate} onOpen={setSelected} />
+        <Settings profile={profile} onSaved={loadProfile} onSignOut={signOut} />
       )}
 
       <nav style={S.tabbar}>
@@ -169,18 +183,29 @@ export default function App() {
         <button style={{ ...S.tabBtn, ...(tab === "calendar" ? S.tabOn : {}) }} onClick={() => setTab("calendar")}>
           <span style={S.tabIcon}>▦</span><span>달력</span>
         </button>
+        <button style={{ ...S.tabBtn, ...(tab === "timeline" ? S.tabOn : {}) }} onClick={() => setTab("timeline")}>
+          <span style={S.tabIcon}>☰</span><span>타임라인</span>
+        </button>
+        <button style={{ ...S.tabBtn, ...(tab === "settings" ? S.tabOn : {}) }} onClick={() => setTab("settings")}>
+          <span style={S.tabIcon}>⚙</span><span>설정</span>
+        </button>
       </nav>
 
       {selected && (
-        <EntrySheet
-          date={selected}
-          entry={byDate[selected]}
+        <DaySheet
+          date={selected.date}
+          initialTab={selected.initialTab}
+          entry={byDate[selected.date]}
           me={userId}
           people={people}
-          onClose={() => setSelected(null)}
           saveEntry={saveEntry}
           uploadPhotos={uploadPhotos}
           deletePhoto={deletePhoto}
+          daySchedules={scheduleByDate(selected.date)}
+          addSchedule={addSchedule}
+          updateSchedule={updateSchedule}
+          deleteSchedule={deleteSchedule}
+          onClose={() => setSelected(null)}
         />
       )}
     </div>

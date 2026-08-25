@@ -8,4 +8,6 @@ if (!url || !key) {
   console.error("VITE_SUPABASE_URL / VITE_SUPABASE_KEY 가 비어 있습니다. .env 를 확인하세요.");
 }
 
-export const supabase = createClient(url, key);
+export const supabase = createClient(url, key, {
+  auth: { persistSession: true, autoRefreshToken: true },
+});
