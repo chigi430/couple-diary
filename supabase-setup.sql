@@ -395,7 +395,7 @@ create policy "own push subscriptions" on push_subscriptions
 -- ────────────────────────────────────────────────
 create extension if not exists pg_net with schema extensions;
 
-create or replace function public.notify_partner(p_couple_id uuid, p_actor uuid, p_title text, p_body text, p_url text)
+create or replace function public.notify_partner(p_couple_id uuid, p_actor uuid, p_title text, p_body text, p_url text, p_category text default 'activity')
 returns void
 language plpgsql
 security definer
@@ -405,10 +405,22 @@ declare
   partner_id uuid;
   base_url   text;
   secret     text;
+  pref       boolean;
 begin
   select id into partner_id from public.profiles
    where couple_id = p_couple_id and id <> p_actor;
   if partner_id is null then return; end if;
+
+  if p_category = 'activity' then
+    select notify_activity into pref from public.profiles where id = partner_id;
+  elsif p_category = 'reminder' then
+    select notify_reminder into pref from public.profiles where id = partner_id;
+  elsif p_category = 'anniversary' then
+    select notify_anniversary into pref from public.profiles where id = partner_id;
+  else
+    pref := true; -- 'always' 카테고리(커플연결, 연말리캡)는 토글 없이 항상 발송
+  end if;
+  if pref is false then return; end if;
 
   select decrypted_secret into base_url from vault.decrypted_secrets where name = 'edge_function_base_url';
   select decrypted_secret into secret   from vault.decrypted_secrets where name = 'edge_function_secret';
@@ -430,7 +442,7 @@ begin
   if TG_OP = 'UPDATE' and old.note is not distinct from new.note then return new; end if;
   perform public.notify_partner(new.couple_id, new.note_by,
     coalesce((select display_name from public.profiles where id = new.note_by), '상대방') || '님이 오늘 일기를 남겼어요',
-    left(new.note, 80), '/?date=' || new.date);
+    left(new.note, 80), '/?date=' || new.date, 'activity');
   return new;
 end $$;
 drop trigger if exists on_entry_note_change on entries;
@@ -443,7 +455,7 @@ language plpgsql security definer set search_path = public as $$
 begin
   perform public.notify_partner(new.couple_id, new.uploaded_by,
     coalesce((select display_name from public.profiles where id = new.uploaded_by), '상대방') || '님이 사진을 올렸어요',
-    '', '/?date=' || (select date from public.entries where id = new.entry_id));
+    '', '/?date=' || (select date from public.entries where id = new.entry_id), 'activity');
   return new;
 end $$;
 drop trigger if exists on_photo_insert on photos;
@@ -456,7 +468,7 @@ language plpgsql security definer set search_path = public as $$
 begin
   perform public.notify_partner(new.couple_id, new.user_id,
     coalesce((select display_name from public.profiles where id = new.user_id), '상대방') || '님이 일정을 추가했어요: ' || new.title,
-    '', '/?date=' || new.start_date);
+    '', '/?date=' || new.start_date, 'activity');
   return new;
 end $$;
 drop trigger if exists on_schedule_insert on schedules;
@@ -492,7 +504,7 @@ begin
   update public.profiles set couple_id = target where id = auth.uid();
 
   perform public.notify_partner(target, auth.uid(),
-    coalesce(joiner_name, '상대방') || '님과 연결됐어요! 🎉', '이제 함께 기록해요', '/');
+    coalesce(joiner_name, '상대방') || '님과 연결됐어요! 🎉', '이제 함께 기록해요', '/', 'always');
 
   return 'ok';
 end
@@ -521,6 +533,53 @@ select cron.schedule(
   );
   $cron$
 );
+
+-- ────────────────────────────────────────────────
+-- 18) 버킷리스트/위시리스트 (같이 하고 싶은 것 목록)
+-- ────────────────────────────────────────────────
+create table if not exists bucket_items (
+  id         uuid primary key default gen_random_uuid(),
+  couple_id  uuid not null references couples(id) on delete cascade,
+  title      text not null,
+  done       boolean not null default false,
+  created_by uuid references auth.users(id),
+  done_by    uuid references auth.users(id),
+  done_at    timestamptz,
+  created_at timestamptz default now()
+);
+alter table bucket_items enable row level security;
+
+drop policy if exists "couple bucket items" on bucket_items;
+create policy "couple bucket items" on bucket_items
+  for all using (couple_id = public.my_couple_id()) with check (couple_id = public.my_couple_id());
+
+do $$
+begin
+  begin
+    alter publication supabase_realtime add table bucket_items;
+  exception when duplicate_object then null;
+  end;
+end $$;
+
+-- 완료 체크 시 상대방에게 알림
+create or replace function public.trg_notify_bucket_done() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  perform public.notify_partner(new.couple_id, coalesce(new.done_by, auth.uid()),
+    '버킷리스트 완료! 🎉', new.title, '/', 'activity');
+  return new;
+end $$;
+drop trigger if exists on_bucket_item_done on bucket_items;
+create trigger on_bucket_item_done after update on bucket_items
+  for each row when (new.done = true and old.done = false)
+  execute function public.trg_notify_bucket_done();
+
+-- ────────────────────────────────────────────────
+-- 19) 알림 카테고리별 on/off (커플연결·연말리캡은 토글 없이 항상 발송)
+-- ────────────────────────────────────────────────
+alter table profiles add column if not exists notify_activity boolean not null default true;
+alter table profiles add column if not exists notify_reminder boolean not null default true;
+alter table profiles add column if not exists notify_anniversary boolean not null default true;
 
 -- ============================================================
 --  끝! "Success. No rows returned" 이 뜨면 정상입니다.

@@ -9,6 +9,7 @@ import ScheduleForm from "./ScheduleForm";
 export default function DaySheet({
   date,
   initialTab = "schedule",
+  onlyDiary = false,
   entry,
   me,
   people,
@@ -21,8 +22,9 @@ export default function DaySheet({
   deleteSchedule,
   onClose,
 }) {
-  const [subTab, setSubTab] = useState(initialTab);
+  const [subTab, setSubTab] = useState(onlyDiary ? "diary" : initialTab);
   const [form, setForm] = useState(null); // null | { date } | { editing }
+  const effectiveTab = onlyDiary ? "diary" : subTab;
 
   const who = (id) => people[id] || { emoji: "🙂", color: "#D98763", display_name: "?" };
   const meInfo = who(me);
@@ -39,16 +41,18 @@ export default function DaySheet({
           <button style={S.closeBtn} onClick={onClose}>✕</button>
         </div>
 
-        <div style={{ ...S.segRow, ...S.daySheetSubTabs }}>
-          <button style={{ ...S.segBtn, ...(subTab === "schedule" ? S.segBtnOn : {}) }} onClick={() => setSubTab("schedule")}>
-            일정보기
-          </button>
-          <button style={{ ...S.segBtn, ...(subTab === "diary" ? S.segBtnOn : {}) }} onClick={() => setSubTab("diary")}>
-            오늘의 우리
-          </button>
-        </div>
+        {!onlyDiary && (
+          <div style={{ ...S.segRow, ...S.daySheetSubTabs }}>
+            <button style={{ ...S.segBtn, ...(subTab === "schedule" ? S.segBtnOn : {}) }} onClick={() => setSubTab("schedule")}>
+              일정보기
+            </button>
+            <button style={{ ...S.segBtn, ...(subTab === "diary" ? S.segBtnOn : {}) }} onClick={() => setSubTab("diary")}>
+              오늘의 우리
+            </button>
+          </div>
+        )}
 
-        {subTab === "schedule" ? (
+        {effectiveTab === "schedule" ? (
           <>
             <div style={S.viewActionsRow}>
               <button style={S.schedAddFab} onClick={() => setForm({ date })}>＋</button>

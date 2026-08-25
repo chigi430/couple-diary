@@ -1,14 +1,25 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { S } from "./styles";
 import { STAMPS } from "./constants";
 import { prettyDate, prettyTime } from "./utils";
 import SignedImage from "./SignedImage";
 import Avatar from "./Avatar";
 import PlacesMap from "./PlacesMap";
+import Stats from "./Stats";
+import Recap from "./Recap";
 
-export default function Timeline({ byDate, people, onOpen }) {
-  const [view, setView] = useState("list"); // list | grid | map
+export default function Timeline({ byDate, people, onOpen, autoOpenRecap, onAutoRecapConsumed }) {
+  const [view, setView] = useState(autoOpenRecap ? "stats" : "list"); // list | grid | map | stats
   const [mapOpen, setMapOpen] = useState(false);
+  const [recapOpen, setRecapOpen] = useState(false);
+
+  useEffect(() => {
+    if (autoOpenRecap) {
+      setRecapOpen(true);
+      onAutoRecapConsumed && onAutoRecapConsumed();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const dates = useMemo(
     () =>
@@ -45,9 +56,14 @@ export default function Timeline({ byDate, people, onOpen }) {
         <button style={{ ...S.segBtn, ...(view === "map" ? S.segBtnOn : {}) }} onClick={() => setView("map")}>
           지도
         </button>
+        <button style={{ ...S.segBtn, ...(view === "stats" ? S.segBtnOn : {}) }} onClick={() => setView("stats")}>
+          통계
+        </button>
       </div>
 
-      {view === "map" ? (
+      {view === "stats" ? (
+        <Stats byDate={byDate} people={people} onOpenRecap={() => setRecapOpen(true)} />
+      ) : view === "map" ? (
         places.length === 0 ? (
           <div style={S.tlEmpty}>좌표가 있는 장소 기록이 없어요. 일기에서 "지도에서 선택"으로 장소를 찍어보세요.</div>
         ) : (
@@ -122,6 +138,8 @@ export default function Timeline({ byDate, people, onOpen }) {
           ))}
         </div>
       )}
+
+      {recapOpen && <Recap byDate={byDate} people={people} onClose={() => setRecapOpen(false)} />}
     </div>
   );
 }

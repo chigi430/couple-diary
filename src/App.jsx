@@ -9,6 +9,7 @@ import CoupleGate from "./CoupleGate";
 import Today from "./Today";
 import Calendar from "./Calendar";
 import Timeline from "./Timeline";
+import Wishlist from "./Wishlist";
 import DaySheet from "./DaySheet";
 import Settings from "./Settings";
 import Avatar from "./Avatar";
@@ -21,9 +22,16 @@ export default function App() {
   const [people, setPeople] = useState({}); // { userId: profile }
   const [loadingProfile, setLoadingProfile] = useState(false);
 
-  const [tab, setTab] = useState("today");
+  const wantsRecap = new URLSearchParams(window.location.search).get("recap");
+  const [tab, setTab] = useState(wantsRecap ? "timeline" : "today");
+  const [autoRecap, setAutoRecap] = useState(() => (wantsRecap ? Date.now() : null));
   const [selected, setSelected] = useState(null);
   const [nowTick, setNowTick] = useState(Date.now());
+
+  // 리캡 알림 클릭으로 들어온 경우, 주소창의 ?recap=1 은 한 번 쓰고 지운다
+  useEffect(() => {
+    if (wantsRecap) window.history.replaceState({}, "", window.location.pathname);
+  }, []);
 
   // 초대코드 만료 표시 갱신용
   useEffect(() => {
@@ -122,6 +130,7 @@ export default function App() {
   const anni = anniversaryInfo(couple?.anniversary_date);
   const memberCount = Object.keys(people).length;
   const meInfo = people[userId] || profile || {};
+  const partnerInfo = Object.values(people).find((p) => p.id !== userId) || null;
   const inviteExpiresAt = couple?.invite_code_expires_at ? new Date(couple.invite_code_expires_at).getTime() : null;
   const inviteExpired = inviteExpiresAt !== null && inviteExpiresAt <= nowTick;
   const inviteMinsLeft = inviteExpiresAt !== null ? Math.max(0, Math.ceil((inviteExpiresAt - nowTick) / 60000)) : null;
@@ -172,8 +181,16 @@ export default function App() {
         {anni ? (
           <>
             <div style={S.anniMain}>
-              <span style={S.anniHeart}>♥</span>
-              <span style={S.anniBig}>함께한 지 <b>{anni.daysTogether}</b>일</span>
+              {partnerInfo ? (
+                <span style={S.anniCoupleNames}>
+                  {meInfo.display_name || "나"}
+                  <span style={S.anniHeart}>♥</span>
+                  {partnerInfo.display_name || "상대"}
+                </span>
+              ) : (
+                <span style={S.anniHeart}>♥</span>
+              )}
+              <span style={S.anniBig}>· 함께한 지 <b>{anni.daysTogether}</b>일</span>
             </div>
             <div style={S.anniChips}>
               <span style={S.chip}>{anni.nextHundredN}일까지 <b style={S.chipD}>D-{anni.hundredLeft}</b></span>
@@ -186,7 +203,7 @@ export default function App() {
       </div>
 
       {tab === "today" ? (
-        <Today byDate={byDate} onOpen={(d) => setSelected({ date: d, initialTab: "diary" })} />
+        <Today byDate={byDate} onOpen={(d) => setSelected({ date: d, initialTab: "diary", onlyDiary: true })} />
       ) : tab === "calendar" ? (
         <Calendar
           byDate={byDate}
@@ -195,7 +212,15 @@ export default function App() {
           onOpen={(d) => setSelected({ date: d, initialTab: "schedule" })}
         />
       ) : tab === "timeline" ? (
-        <Timeline byDate={byDate} people={people} onOpen={(d) => setSelected({ date: d, initialTab: "diary" })} />
+        <Timeline
+          byDate={byDate}
+          people={people}
+          onOpen={(d) => setSelected({ date: d, initialTab: "diary", onlyDiary: true })}
+          autoOpenRecap={autoRecap}
+          onAutoRecapConsumed={() => setAutoRecap(null)}
+        />
+      ) : tab === "wishlist" ? (
+        <Wishlist coupleId={coupleId} userId={userId} people={people} />
       ) : (
         <Settings profile={profile} onSaved={loadProfile} onSignOut={signOut} />
       )}
@@ -210,6 +235,9 @@ export default function App() {
         <button style={{ ...S.tabBtn, ...(tab === "timeline" ? S.tabOn : {}) }} onClick={() => setTab("timeline")}>
           <span style={S.tabIcon}>☰</span><span>타임라인</span>
         </button>
+        <button style={{ ...S.tabBtn, ...(tab === "wishlist" ? S.tabOn : {}) }} onClick={() => setTab("wishlist")}>
+          <span style={S.tabIcon}>☆</span><span>위시리스트</span>
+        </button>
         <button style={{ ...S.tabBtn, ...(tab === "settings" ? S.tabOn : {}) }} onClick={() => setTab("settings")}>
           <span style={S.tabIcon}>⚙</span><span>설정</span>
         </button>
@@ -219,6 +247,7 @@ export default function App() {
         <DaySheet
           date={selected.date}
           initialTab={selected.initialTab}
+          onlyDiary={selected.onlyDiary}
           entry={byDate[selected.date]}
           me={userId}
           people={people}

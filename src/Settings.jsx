@@ -11,6 +11,7 @@ const IS_STANDALONE = window.navigator.standalone || window.matchMedia("(display
 
 export default function Settings({ profile, onSaved, onSignOut }) {
   const fileRef = useRef(null);
+  const [editOpen, setEditOpen] = useState(false);
   const [name, setName] = useState(profile?.display_name || "");
   const [emoji, setEmoji] = useState(profile?.emoji || EMOJI_CHOICES[0]);
   const [color, setColor] = useState(profile?.color || COLOR_CHOICES[0]);
@@ -18,15 +19,28 @@ export default function Settings({ profile, onSaved, onSignOut }) {
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  const [saved, setSaved] = useState(false);
   const [pushOn, setPushOn] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
   const [pushMsg, setPushMsg] = useState("");
+  const [prefs, setPrefs] = useState({
+    notify_activity: profile?.notify_activity !== false,
+    notify_reminder: profile?.notify_reminder !== false,
+    notify_anniversary: profile?.notify_anniversary !== false,
+  });
 
   useEffect(() => {
     if (!pushSupported()) return;
     isPushSubscribed().then(setPushOn);
   }, []);
+
+  const openEdit = () => {
+    setName(profile?.display_name || "");
+    setEmoji(profile?.emoji || EMOJI_CHOICES[0]);
+    setColor(profile?.color || COLOR_CHOICES[0]);
+    setAvatarUrl(profile?.avatar_url || "");
+    setErr("");
+    setEditOpen(true);
+  };
 
   const togglePush = async () => {
     setPushBusy(true);
@@ -48,6 +62,18 @@ export default function Settings({ profile, onSaved, onSignOut }) {
       setPushMsg(e.message);
     } finally {
       setPushBusy(false);
+    }
+  };
+
+  const togglePref = async (key) => {
+    const next = !prefs[key];
+    setPrefs((p) => ({ ...p, [key]: next }));
+    const { error } = await supabase.from("profiles").update({ [key]: next }).eq("id", profile.id);
+    if (error) {
+      setPrefs((p) => ({ ...p, [key]: !next }));
+      setPushMsg(error.message);
+    } else {
+      await onSaved();
     }
   };
 
@@ -116,7 +142,6 @@ export default function Settings({ profile, onSaved, onSignOut }) {
       return;
     }
     setErr("");
-    setSaved(false);
     setBusy(true);
     const { error } = await supabase
       .from("profiles")
@@ -128,45 +153,24 @@ export default function Settings({ profile, onSaved, onSignOut }) {
       return;
     }
     await onSaved();
-    setSaved(true);
+    setEditOpen(false);
   };
 
   return (
     <div style={S.body}>
+      <div style={S.profileDetailCard}>
+        <div style={S.profileAvatarWrap}>
+          <Avatar person={profile} size={134} />
+          <button style={S.profileEditFab} onClick={openEdit} aria-label="프로필 수정">＋</button>
+        </div>
+        <div style={S.profileDetailName}>{profile?.display_name || "나"}</div>
+        <div style={S.profileDetailMeta}>
+          <span style={S.profileEmojiTag}>{profile?.emoji}</span>
+          <span style={{ ...S.profileColorTag, background: profile?.color || "#D98763" }} />
+        </div>
+      </div>
+
       <div style={S.settingsCard}>
-        {err && <div style={S.authError}>{err}</div>}
-
-        <div style={S.avatarPickWrap}>
-          <button style={S.avatarPickBtn} onClick={() => fileRef.current && fileRef.current.click()} disabled={uploading}>
-            <Avatar person={{ avatar_url: avatarUrl, emoji, color }} size={84} />
-            <span style={S.avatarEditBadge}>{uploading ? "…" : "📷"}</span>
-          </button>
-          <input ref={fileRef} type="file" accept="image/*" onChange={onPickAvatar} style={{ display: "none" }} />
-        </div>
-
-        <div style={S.authField}>
-          <label style={S.authLabel}>표시할 이름</label>
-          <input style={S.input} value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 창환" />
-        </div>
-
-        <div style={S.authField}>
-          <label style={S.authLabel}>내 이모지</label>
-          <div style={S.chooserRow}>
-            {EMOJI_CHOICES.map((e) => (
-              <button key={e} style={{ ...S.chooser, ...(emoji === e ? S.chooserOn : {}) }} onClick={() => setEmoji(e)}>{e}</button>
-            ))}
-          </div>
-        </div>
-
-        <div style={S.authField}>
-          <label style={S.authLabel}>내 색</label>
-          <div style={S.chooserRow}>
-            {COLOR_CHOICES.map((c) => (
-              <div key={c} onClick={() => setColor(c)} style={{ ...S.colorDot, background: c, ...(color === c ? S.colorDotOn : {}) }} />
-            ))}
-          </div>
-        </div>
-
         {pushSupported() ? (
           <div style={S.authField}>
             <label style={S.authLabel}>알림</label>
@@ -183,10 +187,40 @@ export default function Settings({ profile, onSaved, onSignOut }) {
             {IS_IOS && !IS_STANDALONE && (
               <div style={S.authSub}>iOS에서 알림을 받으려면 먼저 공유 → 홈 화면에 추가로 앱을 설치해주세요.</div>
             )}
+
             {pushOn && (
-              <button style={S.smallActionBtn} onClick={sendTestPush} disabled={pushBusy}>
-                테스트 알림 보내기
-              </button>
+              <div style={S.prefList}>
+                <div style={S.toggleRow}>
+                  <span style={S.toggleLabel}>상대방 활동 알림</span>
+                  <button
+                    style={{ ...S.toggleSwitch, background: prefs.notify_activity ? "#D98763" : "#E7D9CF" }}
+                    onClick={() => togglePref("notify_activity")}
+                  >
+                    <span style={{ ...S.toggleKnob, left: prefs.notify_activity ? 21 : 3 }} />
+                  </button>
+                </div>
+                <div style={S.toggleRow}>
+                  <span style={S.toggleLabel}>오늘 기록 깜빡하면 알려주기</span>
+                  <button
+                    style={{ ...S.toggleSwitch, background: prefs.notify_reminder ? "#D98763" : "#E7D9CF" }}
+                    onClick={() => togglePref("notify_reminder")}
+                  >
+                    <span style={{ ...S.toggleKnob, left: prefs.notify_reminder ? 21 : 3 }} />
+                  </button>
+                </div>
+                <div style={S.toggleRow}>
+                  <span style={S.toggleLabel}>기념일/D-day 알림</span>
+                  <button
+                    style={{ ...S.toggleSwitch, background: prefs.notify_anniversary ? "#D98763" : "#E7D9CF" }}
+                    onClick={() => togglePref("notify_anniversary")}
+                  >
+                    <span style={{ ...S.toggleKnob, left: prefs.notify_anniversary ? 21 : 3 }} />
+                  </button>
+                </div>
+                <button style={S.smallActionBtn} onClick={sendTestPush} disabled={pushBusy}>
+                  테스트 알림 보내기
+                </button>
+              </div>
             )}
             {pushMsg && <div style={S.authSub}>{pushMsg}</div>}
           </div>
@@ -197,13 +231,58 @@ export default function Settings({ profile, onSaved, onSignOut }) {
           </div>
         )}
 
-        <button style={{ ...S.saveBtn, opacity: busy ? 0.7 : 1 }} onClick={save} disabled={busy}>
-          {busy ? "저장 중…" : saved ? "저장됨 ✓" : "저장하기"}
-        </button>
-
         <button style={S.settingsSignOut} onClick={onSignOut}>로그아웃</button>
         <button style={S.settingsDanger} onClick={leaveCouple} disabled={busy}>커플 연결 해제</button>
       </div>
+
+      {editOpen && (
+        <div style={S.overlay} onClick={() => setEditOpen(false)}>
+          <div style={S.sheet} onClick={(ev) => ev.stopPropagation()}>
+            <div style={S.sheetHandle} />
+            <div style={S.sheetHead}>
+              <div style={S.sheetDate}>프로필 수정</div>
+              <button style={S.closeBtn} onClick={() => setEditOpen(false)}>✕</button>
+            </div>
+
+            {err && <div style={S.authError}>{err}</div>}
+
+            <div style={S.avatarPickWrap}>
+              <button style={S.avatarPickBtn} onClick={() => fileRef.current && fileRef.current.click()} disabled={uploading}>
+                <Avatar person={{ avatar_url: avatarUrl, emoji, color }} size={96} />
+                <span style={S.avatarEditBadge}>{uploading ? "…" : "📷"}</span>
+              </button>
+              <input ref={fileRef} type="file" accept="image/*" onChange={onPickAvatar} style={{ display: "none" }} />
+            </div>
+
+            <div style={S.authField}>
+              <label style={S.authLabel}>표시할 이름</label>
+              <input style={S.input} value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 창환" />
+            </div>
+
+            <div style={S.authField}>
+              <label style={S.authLabel}>내 이모지</label>
+              <div style={S.chooserRow}>
+                {EMOJI_CHOICES.map((e) => (
+                  <button key={e} style={{ ...S.chooser, ...(emoji === e ? S.chooserOn : {}) }} onClick={() => setEmoji(e)}>{e}</button>
+                ))}
+              </div>
+            </div>
+
+            <div style={S.authField}>
+              <label style={S.authLabel}>내 색</label>
+              <div style={S.chooserRow}>
+                {COLOR_CHOICES.map((c) => (
+                  <div key={c} onClick={() => setColor(c)} style={{ ...S.colorDot, background: c, ...(color === c ? S.colorDotOn : {}) }} />
+                ))}
+              </div>
+            </div>
+
+            <button style={{ ...S.saveBtn, opacity: busy ? 0.7 : 1 }} onClick={save} disabled={busy}>
+              {busy ? "저장 중…" : "저장하기"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

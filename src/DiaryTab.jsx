@@ -56,7 +56,7 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
 
   if (mode === "view") {
     return (
-      <>
+      <div key="view" style={S.diarySlide}>
         {author && (
           <div style={S.sheetSub}>
             <Avatar person={author} size={18} />
@@ -93,12 +93,12 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
             </div>
           </>
         )}
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div key="edit" style={S.diarySlide}>
       <div style={S.sheetSub}>
         <Avatar person={myInfo} size={18} />
         {myInfo.display_name}(으)로 기록 중
@@ -186,6 +186,6 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
       <p style={{ fontSize: 11.5, color: "#C0B2A8", textAlign: "center", marginTop: 10 }}>
         입력하면 자동으로 저장돼요. (칸을 벗어날 때 저장됩니다.)
       </p>
-    </>
+    </div>
   );
 }
