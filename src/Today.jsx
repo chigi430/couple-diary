@@ -5,6 +5,7 @@ import { todayStr, prettyDate, prettyTime, hasAny } from "./utils";
 import SignedImage from "./SignedImage";
 import PhotoCarousel from "./PhotoCarousel";
 import Avatar from "./Avatar";
+import { useHideOnScroll } from "./useHideOnScroll";
 
 const PAGE_SIZE = 5;
 
@@ -35,24 +36,9 @@ export default function Today({ byDate, people, onOpen }) {
   const [visible, setVisible] = useState(PAGE_SIZE);
   const sentinelRef = useRef(null);
 
-  // 아래로 스크롤할수록 "최근 우리" 스트립이 접히면서 사라지는 모션 (인스타 스토리 줄 느낌)
-  const [scrollY, setScrollY] = useState(0);
-  useEffect(() => {
-    let ticking = false;
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        setScrollY(window.scrollY);
-        ticking = false;
-      });
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-  const RECENT_COLLAPSE_RANGE = 400;
+  // 아래로 스크롤하면 "최근 우리" 스트립을 접어서 숨기고, 위로 스크롤하면 다시 펼침 (스크롤 거리가 아니라 방향으로 판단)
+  const recentHidden = useHideOnScroll();
   const RECENT_MAX_H = 118;
-  const collapseP = Math.min(1, scrollY / RECENT_COLLAPSE_RANGE);
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -111,10 +97,11 @@ export default function Today({ byDate, people, onOpen }) {
           style={{
             ...S.recentWrap,
             overflow: "hidden",
-            maxHeight: RECENT_MAX_H * (1 - collapseP),
-            marginTop: 17 * (1 - collapseP),
-            opacity: 1 - collapseP,
-            transform: `translateY(${-16 * collapseP}px) scale(${1 - collapseP * 0.06})`,
+            maxHeight: recentHidden ? 0 : RECENT_MAX_H,
+            marginTop: recentHidden ? 0 : 17,
+            opacity: recentHidden ? 0 : 1,
+            transform: recentHidden ? "translateY(-16px) scale(0.94)" : "translateY(0) scale(1)",
+            transition: "max-height .28s ease, margin-top .28s ease, opacity .22s ease, transform .28s ease",
           }}
         >
           <div style={S.recentHead}>최근 우리</div>

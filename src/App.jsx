@@ -4,6 +4,7 @@ import { S, css } from "./styles";
 import { anniversaryInfo } from "./utils";
 import { useEntries } from "./useEntries";
 import { useSchedules } from "./useSchedules";
+import { useHideOnScroll } from "./useHideOnScroll";
 import Auth from "./Auth";
 import CoupleGate from "./CoupleGate";
 import Today from "./Today";
@@ -29,6 +30,7 @@ export default function App() {
   const [autoRecap, setAutoRecap] = useState(() => (wantsRecap ? Date.now() : null));
   const [selected, setSelected] = useState(null);
   const [nowTick, setNowTick] = useState(Date.now());
+  const tabbarHidden = useHideOnScroll();
 
   // 리캡 알림 클릭으로 들어온 경우, 주소창의 ?recap=1 은 한 번 쓰고 지운다
   useEffect(() => {
@@ -225,7 +227,13 @@ export default function App() {
         <Settings profile={profile} onSaved={loadProfile} onSignOut={signOut} />
       )}
 
-      <nav style={S.tabbar}>
+      <nav
+        style={{
+          ...S.tabbar,
+          transform: `translateX(-50%) translateY(${tabbarHidden ? "140%" : "0"})`,
+          transition: "transform .25s cubic-bezier(.2,.8,.2,1)",
+        }}
+      >
         <button style={{ ...S.tabBtn, ...(tab === "today" ? S.tabOn : {}) }} onClick={() => setTab("today")}>
           <IconToday size={17} /><span>오늘</span>
         </button>
