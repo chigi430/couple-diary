@@ -29,8 +29,7 @@ export default function Settings({ profile, onSaved, onSignOut }) {
   const [pushBusy, setPushBusy] = useState(false);
   const [pushMsg, setPushMsg] = useState("");
   const [isLatest, setIsLatest] = useState(null); // null=확인 중/실패, true/false=최신 여부
-  const [remoteVersion, setRemoteVersion] = useState(null);
-  const [changeLog, setChangeLog] = useState([]);
+  const [changelogEntries, setChangelogEntries] = useState([]);
   const [prefs, setPrefs] = useState({
     notify_activity: profile?.notify_activity !== false,
     notify_reminder: profile?.notify_reminder !== false,
@@ -47,20 +46,15 @@ export default function Settings({ profile, onSaved, onSignOut }) {
     fetch("/version.json", { cache: "no-store" })
       .then((r) => r.json())
       .then(async (d) => {
-        setRemoteVersion(d.version);
         const latest = d.version === __APP_VERSION__;
         setIsLatest(latest);
         if (latest) return;
         try {
-          const res = await fetch(
-            `https://api.github.com/repos/chigi430/couple-diary/compare/${__APP_VERSION__}...${d.version}`
-          );
+          const res = await fetch("/changelog.json", { cache: "no-store" });
           if (!res.ok) return;
-          const data = await res.json();
-          const messages = (data.commits || [])
-            .map((c) => c.commit.message.split("\n")[0])
-            .filter(Boolean);
-          setChangeLog(messages);
+          const list = await res.json();
+          const idx = list.findIndex((e) => e.version === __APP_VERSION__);
+          setChangelogEntries(idx === -1 ? list : list.slice(0, idx));
         } catch {
           // 변경 내역 조회는 실패해도 업데이트 자체는 진행 가능하게 조용히 무시
         }
@@ -147,13 +141,21 @@ export default function Settings({ profile, onSaved, onSignOut }) {
   };
 
   const confirmAndUpdate = async () => {
-    const lines = [`현재 버전: ${__APP_VERSION__}`];
-    if (remoteVersion) lines.push(`최신 버전: ${remoteVersion}`);
-    if (changeLog.length > 0) {
-      lines.push("", "이번 업데이트 변경 내용:");
-      changeLog.slice(0, 12).forEach((m) => lines.push(`· ${m}`));
+    if (isLatest === true) {
+      window.alert("이미 최신 버전이에요 ✓");
+      return;
     }
-    lines.push("", "캐시를 지우고 새로고침해요. 진행할까요?");
+    const lines = [];
+    if (changelogEntries.length > 0) {
+      changelogEntries.forEach((entry) => {
+        lines.push(`📌 ${entry.date}`);
+        entry.notes.forEach((n) => lines.push(`  · ${n}`));
+        lines.push("");
+      });
+    } else {
+      lines.push("새 버전이 있어요.", "");
+    }
+    lines.push("캐시를 지우고 새로고침해요. 진행할까요?");
     if (!window.confirm(lines.join("\n"))) return;
     await forceUpdate();
   };

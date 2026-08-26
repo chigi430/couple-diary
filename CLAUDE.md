@@ -86,3 +86,4 @@ Edge Function 쪽 비밀값(VAPID 비밀키, CRON_SECRET)은 `.env`가 아니라
 - 설명은 한국어로, 초보 친화적으로.
 - `npm run build`/`dev`/`preview`는 매번 승인받지 않고 바로 실행 (Bash 도구 사용 — PowerShell 도구는 권한 규칙이 안 먹힘).
 - `supabase-setup.sql` 변경(새 컬럼/함수/트리거 추가 등)도 승인받지 말고 바로 실행할 것 — `npx supabase db query --linked --file supabase-setup.sql` (또는 필요한 부분만 `--linked "<SQL>"`)으로 직접 적용. 이 파일은 여러 번 실행해도 안전하게 설계돼 있음. CLI가 로그인/링크 안 돼 있으면 그때만 로그인 진행 여부를 물을 것.
+- 사용자 눈에 보이는 변경사항을 배포(git push)할 때는 `public/changelog.json`에도 새 항목을 추가할 것 — `version`은 그 배포 커밋의 짧은 해시(`git rev-parse --short HEAD`, 7자), `notes`는 초보 사용자 눈높이의 한국어 한 줄 설명 배열(깃 커밋 메시지 그대로 쓰지 말 것). 배열 맨 앞(최신)에 추가. 설정 화면의 "버전 정보/업데이트" 기능이 이 파일로 "무엇이 바뀌었는지"를 보여줌.
