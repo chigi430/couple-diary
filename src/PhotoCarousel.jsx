@@ -36,12 +36,15 @@ export default function PhotoCarousel({ photos, who }) {
         <div ref={scrollRef} className="no-scrollbar" style={S.carouselScroll} onScroll={onScroll}>
           {photos.map((p, i) => (
             <div key={p.id} style={S.carouselSlide}>
-              <SignedImage
-                path={p.storage_path}
-                style={S.carouselImg}
-                onLoad={onImgLoad(p.id)}
-                onClick={() => setLightboxIndex(i)}
-              />
+              {/* 피드에 카드가 여러 장 뜰 때 안 보이는 슬라이드까지 한꺼번에 다운로드되지 않도록, 현재 슬라이드 앞뒤 1장만 로드 */}
+              {Math.abs(i - active) <= 1 && (
+                <SignedImage
+                  path={p.storage_path}
+                  style={S.carouselImg}
+                  onLoad={onImgLoad(p.id)}
+                  onClick={() => setLightboxIndex(i)}
+                />
+              )}
               {who && (
                 <span style={{ ...S.photoBy, background: who(p.uploaded_by).color }}>{who(p.uploaded_by).emoji}</span>
               )}

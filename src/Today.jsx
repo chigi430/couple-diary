@@ -7,7 +7,7 @@ import PhotoCarousel from "./PhotoCarousel";
 import Avatar from "./Avatar";
 import { useHideOnScroll } from "./useHideOnScroll";
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 10;
 
 export default function Today({ byDate, people, onOpen }) {
   const t = todayStr();
