@@ -30,6 +30,7 @@ export default function Settings({ profile, onSaved, onSignOut }) {
   const [pushMsg, setPushMsg] = useState("");
   const [isLatest, setIsLatest] = useState(null); // null=확인 중/실패, true/false=최신 여부
   const [remoteVersion, setRemoteVersion] = useState(null);
+  const [changeLog, setChangeLog] = useState([]);
   const [prefs, setPrefs] = useState({
     notify_activity: profile?.notify_activity !== false,
     notify_reminder: profile?.notify_reminder !== false,
@@ -45,9 +46,24 @@ export default function Settings({ profile, onSaved, onSignOut }) {
   useEffect(() => {
     fetch("/version.json", { cache: "no-store" })
       .then((r) => r.json())
-      .then((d) => {
+      .then(async (d) => {
         setRemoteVersion(d.version);
-        setIsLatest(d.version === __APP_VERSION__);
+        const latest = d.version === __APP_VERSION__;
+        setIsLatest(latest);
+        if (latest) return;
+        try {
+          const res = await fetch(
+            `https://api.github.com/repos/chigi430/couple-diary/compare/${__APP_VERSION__}...${d.version}`
+          );
+          if (!res.ok) return;
+          const data = await res.json();
+          const messages = (data.commits || [])
+            .map((c) => c.commit.message.split("\n")[0])
+            .filter(Boolean);
+          setChangeLog(messages);
+        } catch {
+          // 변경 내역 조회는 실패해도 업데이트 자체는 진행 가능하게 조용히 무시
+        }
       })
       .catch(() => setIsLatest(null));
   }, []);
@@ -133,6 +149,10 @@ export default function Settings({ profile, onSaved, onSignOut }) {
   const confirmAndUpdate = async () => {
     const lines = [`현재 버전: ${__APP_VERSION__}`];
     if (remoteVersion) lines.push(`최신 버전: ${remoteVersion}`);
+    if (changeLog.length > 0) {
+      lines.push("", "이번 업데이트 변경 내용:");
+      changeLog.slice(0, 12).forEach((m) => lines.push(`· ${m}`));
+    }
     lines.push("", "캐시를 지우고 새로고침해요. 진행할까요?");
     if (!window.confirm(lines.join("\n"))) return;
     await forceUpdate();
