@@ -172,6 +172,15 @@ export const S = {
   recentImg: { width: 70, height: 70, objectFit: "cover", borderRadius: 12, display: "block" },
   recentDate: { fontSize: 10.5, color: "var(--text-muted)", marginTop: 4, display: "block", textAlign: "center" },
 
+  feedWrap: { marginTop: 20 },
+  feedHead: { fontSize: 12.5, fontWeight: 800, color: "var(--text-chip)", margin: "0 4px 10px" },
+  feedCard: { background: "var(--card)", borderRadius: 20, padding: "14px 15px", marginBottom: 12, boxShadow: "0 8px 22px rgba(122,74,60,0.08)" },
+  feedTopRow: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, width: "100%", border: "none", background: "none", padding: 0, marginBottom: 10, cursor: "pointer", textAlign: "left" },
+  feedMood: { fontSize: 16, flexShrink: 0 },
+  feedFootBtn: { display: "block", width: "100%", textAlign: "left", border: "none", background: "none", padding: 0, cursor: "pointer" },
+  feedSentinel: { height: 1 },
+  feedEnd: { textAlign: "center", padding: "16px 0 6px", fontSize: 11.5, color: "var(--text-muted2)" },
+
   tabbar: { position: "fixed", left: "50%", transform: "translateX(-50%)", bottom: 14, width: "min(94%,400px)", background: "var(--tabbar-bg)", backdropFilter: "blur(10px)", borderRadius: 18, display: "flex", padding: 5, boxShadow: "0 8px 24px rgba(122,74,60,0.16)", zIndex: 40 },
   tabBtn: { flex: 1, border: "none", background: "none", padding: "7px 2px", borderRadius: 13, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, fontSize: 9.5, fontWeight: 700, color: "var(--text-muted2)", cursor: "pointer" },
   tabOn: { background: "var(--tabon-bg)", color: "var(--text-accent)" },

@@ -203,7 +203,7 @@ export default function App() {
       </div>
 
       {tab === "today" ? (
-        <Today byDate={byDate} onOpen={(d) => setSelected({ date: d, initialTab: "diary", onlyDiary: true })} />
+        <Today byDate={byDate} people={people} onOpen={(d) => setSelected({ date: d, initialTab: "diary", onlyDiary: true })} />
       ) : tab === "calendar" ? (
         <Calendar
           byDate={byDate}
