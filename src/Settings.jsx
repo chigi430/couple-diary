@@ -118,6 +118,21 @@ export default function Settings({ profile, onSaved, onSignOut }) {
     }
   };
 
+  const forceUpdate = async () => {
+    try {
+      if ("serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+      }
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+    } finally {
+      window.location.reload();
+    }
+  };
+
   const leaveCouple = async () => {
     const ok = window.confirm(
       "정말 커플 연결을 해제할까요?\n\n" +
@@ -163,6 +178,7 @@ export default function Settings({ profile, onSaved, onSignOut }) {
           <MoreMenu
             btnStyle={S.settingsMoreBtn}
             items={[
+              { label: "최신 버전으로 업데이트", onClick: forceUpdate },
               { label: "로그아웃", onClick: onSignOut },
               { label: "커플 연결 해제", onClick: leaveCouple, danger: true },
             ]}
