@@ -101,7 +101,9 @@ export default function Today({ byDate, people, onOpen }) {
             maxHeight: recentHidden ? 0 : RECENT_MAX_H,
             marginTop: recentHidden ? 0 : 17,
             opacity: recentHidden ? 0 : 1,
-            transition: "max-height .28s ease, margin-top .28s ease, opacity .2s ease",
+            transform: `translateY(${recentHidden ? "-10px" : "0"})`,
+            transition:
+              "max-height .25s cubic-bezier(.2,.8,.2,1), margin-top .25s cubic-bezier(.2,.8,.2,1), opacity .25s cubic-bezier(.2,.8,.2,1), transform .25s cubic-bezier(.2,.8,.2,1)",
           }}
         >
           <div style={S.recentHead}>최근 우리</div>
