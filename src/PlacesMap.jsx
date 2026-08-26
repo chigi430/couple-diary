@@ -43,7 +43,10 @@ export default function PlacesMap({ places, onOpen }) {
         if (places.length > 1) map.setBounds(bounds);
         else if (places.length === 1) map.setLevel(4);
       })
-      .catch((e) => setErr(e.message));
+      .catch((e) => {
+        console.error("지도 로드 실패:", e);
+        setErr("지도를 불러오지 못했어요. 잠시 후 다시 시도해주세요.");
+      });
     return () => {
       alive = false;
       markers.forEach((m) => m.setMap(null));

@@ -13,6 +13,7 @@ export default function DaySheet({
   date,
   initialTab = "schedule",
   onlyDiary = false,
+  forceEdit = false,
   entry,
   me,
   people,
@@ -27,7 +28,7 @@ export default function DaySheet({
 }) {
   const [subTab, setSubTab] = useState(onlyDiary ? "diary" : initialTab);
   const [form, setForm] = useState(null); // null | { date } | { editing }
-  const [diaryMode, setDiaryMode] = useState(() => (hasAny(entry) ? "view" : "edit"));
+  const [diaryMode, setDiaryMode] = useState(() => (forceEdit || !hasAny(entry) ? "edit" : "view"));
   const effectiveTab = onlyDiary ? "diary" : subTab;
   const diaryHasContent = hasAny(entry);
 

@@ -37,7 +37,7 @@ export default function Auth() {
         if (error) throw error;
         // 이메일 확인이 켜져 있으면 session 이 없습니다.
         if (!data.session) {
-          setInfo("가입 확인 메일을 보냈어요. 메일의 링크를 누른 뒤 로그인해주세요. (둘이서만 쓸 거면 Supabase에서 이메일 확인을 꺼두는 걸 권장해요.)");
+          setInfo("가입 확인 메일을 보냈어요. 메일의 링크를 누른 뒤 로그인해주세요.");
           setMode("signin");
         }
       } else {
@@ -46,6 +46,7 @@ export default function Auth() {
       }
       // 성공 시 App 의 onAuthStateChange 가 알아서 화면을 전환합니다.
     } catch (e) {
+      console.error("로그인/가입 실패:", e);
       setErr(translate(e.message));
     } finally {
       setBusy(false);
@@ -121,5 +122,5 @@ function translate(msg = "") {
   if (msg.includes("already registered")) return "이미 가입된 이메일이에요. 로그인해주세요.";
   if (msg.includes("at least 6")) return "비밀번호는 6자 이상이어야 해요.";
   if (msg.includes("valid email")) return "이메일 형식을 확인해주세요.";
-  return msg;
+  return "문제가 발생했어요. 잠시 후 다시 시도해주세요.";
 }

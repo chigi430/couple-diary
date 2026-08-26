@@ -71,7 +71,7 @@ export default function Today({ byDate, people, onOpen }) {
 
         {has ? (
           <div>
-            {e.photos && e.photos.length > 0 && <PhotoCarousel photos={e.photos} />}
+            {e.photos && e.photos.length > 0 && <PhotoCarousel photos={e.photos} who={who} />}
             <div style={S.todayMetaRow}>
               {e.mood && <span style={S.metaPill}>{e.mood}</span>}
               {e.place && <span style={S.metaPill}>📍 {e.place}</span>}
@@ -82,7 +82,7 @@ export default function Today({ byDate, people, onOpen }) {
               })}
             </div>
             {e.note && <p style={S.todayNote}>{e.note}</p>}
-            <button style={S.editBtn} onClick={() => onOpen(t)}>오늘 기록 이어쓰기</button>
+            <button style={S.editBtn} onClick={() => onOpen(t, { mode: "edit" })}>오늘 기록 이어쓰기</button>
           </div>
         ) : (
           <div style={S.emptyToday}>

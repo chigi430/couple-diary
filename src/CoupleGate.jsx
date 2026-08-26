@@ -19,7 +19,8 @@ export default function CoupleGate({ onDone, onSignOut }) {
       if (error) throw error;
       setCreatedCode(data); // 초대코드
     } catch (e) {
-      setErr(e.message);
+      console.error("공간 생성 실패:", e);
+      setErr("공간을 만들지 못했어요. 잠시 후 다시 시도해주세요.");
     } finally {
       setBusy(false);
     }
@@ -43,7 +44,8 @@ export default function CoupleGate({ onDone, onSignOut }) {
         setErr("코드를 찾을 수 없어요. 다시 확인해주세요.");
       }
     } catch (e) {
-      setErr(e.message);
+      console.error("커플 참여 실패:", e);
+      setErr("참여하지 못했어요. 잠시 후 다시 시도해주세요.");
     } finally {
       setBusy(false);
     }

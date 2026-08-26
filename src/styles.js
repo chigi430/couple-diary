@@ -76,7 +76,7 @@ export const css = `
 @keyframes tabFade { from { opacity:0; transform: translateY(4px) } to { opacity:1; transform: translateY(0) } }
 @keyframes slideUpFade { from { opacity:0; transform: translateY(16px) } to { opacity:1; transform: translateY(0) } }
 @keyframes toastIn { from { opacity:0; transform: translate(-50%, -14px) } to { opacity:1; transform: translate(-50%, 0) } }
-@keyframes listPop { from { opacity:0; transform: translateY(8px) } to { opacity:1; transform: translateY(0) } }
+@keyframes listPop { from { opacity:0; transform: translateY(8px) } to { opacity:1; transform: none } }
 * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 html, body { margin:0; padding:0; background: var(--bg1); }
 input, textarea, button { font-family: inherit; }

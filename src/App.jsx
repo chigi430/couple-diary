@@ -13,6 +13,7 @@ import Timeline from "./Timeline";
 import Wishlist from "./Wishlist";
 import DaySheet from "./DaySheet";
 import Settings from "./Settings";
+import AnniversarySheet from "./AnniversarySheet";
 import Avatar from "./Avatar";
 import ToastHost from "./ToastHost";
 import { IconToday, IconCalendar, IconList, IconStar, IconSettings } from "./Icons";
@@ -29,6 +30,7 @@ export default function App() {
   const [tab, setTab] = useState(wantsRecap ? "timeline" : "today");
   const [autoRecap, setAutoRecap] = useState(() => (wantsRecap ? Date.now() : null));
   const [selected, setSelected] = useState(null);
+  const [annEditOpen, setAnnEditOpen] = useState(false);
   const [nowTick, setNowTick] = useState(Date.now());
   // 하단 탭은 살짝만 스크롤해도 바로 숨도록 임계값을 낮게 둠
   const tabbarHidden = useHideOnScroll({ threshold: 6, topGuard: 40 });
@@ -114,16 +116,15 @@ export default function App() {
     if (!error) await loadProfile();
   };
 
-  const setAnniversary = async () => {
-    const val = window.prompt("사귀기 시작한 날을 입력하세요 (예: 2025-03-14)", couple?.anniversary_date || "");
-    if (val === null) return;
-    const trimmed = val.trim();
-    if (trimmed && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-      window.alert("YYYY-MM-DD 형식으로 입력해주세요.");
-      return;
-    }
-    const { data } = await supabase.from("couples").update({ anniversary_date: trimmed || null }).eq("id", coupleId).select().single();
+  const saveAnniversary = async (val) => {
+    const { data, error } = await supabase
+      .from("couples")
+      .update({ anniversary_date: val })
+      .eq("id", coupleId)
+      .select()
+      .single();
     if (data) setCouple(data);
+    return { error };
   };
 
   // ── 화면 분기 ──
@@ -180,7 +181,7 @@ export default function App() {
       )}
 
       {/* 기념일 */}
-      <div style={S.anniStrip} onClick={setAnniversary}>
+      <div style={S.anniStrip} onClick={() => setAnnEditOpen(true)}>
         {anni ? (
           <>
             <div style={S.anniMain}>
@@ -206,7 +207,11 @@ export default function App() {
       </div>
 
       {tab === "today" ? (
-        <Today byDate={byDate} people={people} onOpen={(d) => setSelected({ date: d, initialTab: "diary", onlyDiary: true })} />
+        <Today
+          byDate={byDate}
+          people={people}
+          onOpen={(d, opts) => setSelected({ date: d, initialTab: "diary", onlyDiary: true, forceEdit: opts?.mode === "edit" })}
+        />
       ) : tab === "calendar" ? (
         <Calendar
           byDate={byDate}
@@ -257,6 +262,7 @@ export default function App() {
           date={selected.date}
           initialTab={selected.initialTab}
           onlyDiary={selected.onlyDiary}
+          forceEdit={selected.forceEdit}
           entry={byDate[selected.date]}
           me={userId}
           people={people}
@@ -268,6 +274,14 @@ export default function App() {
           updateSchedule={updateSchedule}
           deleteSchedule={deleteSchedule}
           onClose={() => setSelected(null)}
+        />
+      )}
+
+      {annEditOpen && (
+        <AnniversarySheet
+          initial={couple?.anniversary_date || ""}
+          onSave={saveAnniversary}
+          onClose={() => setAnnEditOpen(false)}
         />
       )}
     </div>

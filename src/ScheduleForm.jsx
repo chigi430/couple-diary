@@ -30,7 +30,8 @@ export default function ScheduleForm({ date, existing, meInfo, onSave, onDelete,
     const { error } = await onSave({ startDate, endDate, allDay, startTime, endTime, title: title.trim() });
     setBusy(false);
     if (error) {
-      setErr(error.message);
+      console.error("일정 저장 실패:", error);
+      setErr("저장하지 못했어요. 잠시 후 다시 시도해주세요.");
       return;
     }
     onClose();

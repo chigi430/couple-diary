@@ -9,6 +9,7 @@ import { toast } from "./toast";
 import Avatar from "./Avatar";
 import { IconX, IconPlus } from "./Icons";
 import MoreMenu from "./MoreMenu";
+import ConfirmSheet from "./ConfirmSheet";
 import { useSheetDrag } from "./useSheetDrag";
 
 const IS_IOS = /iP(hone|od|ad)/.test(navigator.userAgent);
@@ -30,6 +31,8 @@ export default function Settings({ profile, onSaved, onSignOut }) {
   const [pushMsg, setPushMsg] = useState("");
   const [isLatest, setIsLatest] = useState(null); // null=확인 중/실패, true/false=최신 여부
   const [changelogEntries, setChangelogEntries] = useState([]);
+  const [updateConfirmOpen, setUpdateConfirmOpen] = useState(false);
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   const [prefs, setPrefs] = useState({
     notify_activity: profile?.notify_activity !== false,
     notify_reminder: profile?.notify_reminder !== false,
@@ -98,7 +101,8 @@ export default function Settings({ profile, onSaved, onSignOut }) {
         setPushOn(true);
       }
     } catch (e) {
-      setPushMsg(e.message);
+      console.error("알림 설정 변경 실패:", e);
+      setPushMsg("알림 설정을 변경하지 못했어요. 잠시 후 다시 시도해주세요.");
     } finally {
       setPushBusy(false);
     }
@@ -109,8 +113,9 @@ export default function Settings({ profile, onSaved, onSignOut }) {
     setPrefs((p) => ({ ...p, [key]: next }));
     const { error } = await supabase.from("profiles").update({ [key]: next }).eq("id", profile.id);
     if (error) {
+      console.error("알림 카테고리 설정 실패:", error);
       setPrefs((p) => ({ ...p, [key]: !next }));
-      setPushMsg(error.message);
+      setPushMsg("설정을 저장하지 못했어요. 잠시 후 다시 시도해주세요.");
     } else {
       await onSaved();
     }
@@ -136,39 +141,29 @@ export default function Settings({ profile, onSaved, onSignOut }) {
       setAvatarUrl(url);
       await onSaved();
     } catch (e) {
-      setErr(e.message);
+      console.error("프로필 사진 업로드 실패:", e);
+      setErr("사진을 올리지 못했어요. 잠시 후 다시 시도해주세요.");
     } finally {
       setUploading(false);
     }
   };
 
-  const confirmAndUpdate = async () => {
+  const groupedChangelog = [];
+  changelogEntries.forEach((entry) => {
+    const last = groupedChangelog[groupedChangelog.length - 1];
+    if (last && last.date === entry.date) {
+      last.notes.push(...entry.notes);
+    } else {
+      groupedChangelog.push({ date: entry.date, notes: [...entry.notes] });
+    }
+  });
+
+  const confirmAndUpdate = () => {
     if (isLatest === true) {
-      window.alert("이미 최신 버전이에요 ✓");
+      toast("이미 최신 버전이에요 ✓");
       return;
     }
-    const lines = [];
-    if (changelogEntries.length > 0) {
-      const grouped = [];
-      changelogEntries.forEach((entry) => {
-        const last = grouped[grouped.length - 1];
-        if (last && last.date === entry.date) {
-          last.notes.push(...entry.notes);
-        } else {
-          grouped.push({ date: entry.date, notes: [...entry.notes] });
-        }
-      });
-      grouped.forEach((g) => {
-        lines.push(`📌 ${g.date}`);
-        g.notes.forEach((n) => lines.push(`  · ${n}`));
-        lines.push("");
-      });
-    } else {
-      lines.push("새 버전이 있어요.", "");
-    }
-    lines.push("캐시를 지우고 새로고침해요. 진행할까요?");
-    if (!window.confirm(lines.join("\n"))) return;
-    await forceUpdate();
+    setUpdateConfirmOpen(true);
   };
 
   const forceUpdate = async () => {
@@ -187,17 +182,14 @@ export default function Settings({ profile, onSaved, onSignOut }) {
   };
 
   const leaveCouple = async () => {
-    const ok = window.confirm(
-      "정말 커플 연결을 해제할까요?\n\n" +
-        "내 계정만 이 커플 공간에서 빠져나가요. 지금까지 쌓인 기록은 삭제되지 않고 그대로 남아있고, 나중에 상대에게 새 초대코드를 받으면 다시 들어올 수 있어요."
-    );
-    if (!ok) return;
+    setLeaveConfirmOpen(false);
     setErr("");
     setBusy(true);
     const { error } = await supabase.from("profiles").update({ couple_id: null }).eq("id", profile.id);
     setBusy(false);
     if (error) {
-      setErr(error.message);
+      console.error("커플 연결 해제 실패:", error);
+      setErr("연결 해제에 실패했어요. 잠시 후 다시 시도해주세요.");
       return;
     }
     await onSaved();
@@ -216,7 +208,8 @@ export default function Settings({ profile, onSaved, onSignOut }) {
       .eq("id", profile.id);
     setBusy(false);
     if (error) {
-      setErr(error.message);
+      console.error("프로필 저장 실패:", error);
+      setErr("저장하지 못했어요. 잠시 후 다시 시도해주세요.");
       return;
     }
     await onSaved();
@@ -233,7 +226,7 @@ export default function Settings({ profile, onSaved, onSignOut }) {
             items={[
               { label: "최신 버전으로 업데이트", onClick: confirmAndUpdate },
               { label: "로그아웃", onClick: onSignOut },
-              { label: "커플 연결 해제", onClick: leaveCouple, danger: true },
+              { label: "커플 연결 해제", onClick: () => setLeaveConfirmOpen(true), danger: true },
             ]}
           />
         </div>
@@ -388,6 +381,47 @@ export default function Settings({ profile, onSaved, onSignOut }) {
             </div>
           </div>
         </div>
+      )}
+
+      {updateConfirmOpen && (
+        <ConfirmSheet
+          title="업데이트"
+          confirmLabel="업데이트"
+          onConfirm={() => {
+            setUpdateConfirmOpen(false);
+            forceUpdate();
+          }}
+          onClose={() => setUpdateConfirmOpen(false)}
+        >
+          {groupedChangelog.length > 0 ? (
+            groupedChangelog.map((g) => (
+              <div key={g.date} style={{ marginBottom: 10 }}>
+                <div style={{ fontWeight: 700, marginBottom: 4 }}>📌 {g.date}</div>
+                {g.notes.map((n, i) => (
+                  <div key={i} style={{ color: "var(--text-muted)" }}>· {n}</div>
+                ))}
+              </div>
+            ))
+          ) : (
+            <div style={{ marginBottom: 10 }}>새 버전이 있어요.</div>
+          )}
+          <div style={{ fontSize: 12, color: "var(--text-muted2)" }}>캐시를 지우고 새로고침해요.</div>
+        </ConfirmSheet>
+      )}
+
+      {leaveConfirmOpen && (
+        <ConfirmSheet
+          title="커플 연결 해제"
+          confirmLabel="해제"
+          danger
+          onConfirm={leaveCouple}
+          onClose={() => setLeaveConfirmOpen(false)}
+        >
+          <div>정말 커플 연결을 해제할까요?</div>
+          <div style={{ marginTop: 8, fontSize: 12.5, color: "var(--text-muted2)" }}>
+            내 계정만 이 커플 공간에서 빠져나가요. 지금까지 쌓인 기록은 삭제되지 않고 그대로 남아있고, 나중에 상대에게 새 초대코드를 받으면 다시 들어올 수 있어요.
+          </div>
+        </ConfirmSheet>
       )}
     </div>
   );

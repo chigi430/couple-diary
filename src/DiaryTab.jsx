@@ -23,7 +23,7 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
     const { error } = await saveEntry(date, patch);
     if (error) {
       console.error("저장 실패:", error);
-      window.alert(`저장하지 못했어요: ${error.message}`);
+      window.alert("저장하지 못했어요. 잠시 후 다시 시도해주세요.");
     }
   };
 
@@ -37,7 +37,7 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
       await deletePhoto(p);
     } catch (e) {
       console.error("사진 삭제 실패:", e);
-      window.alert(e.message || "사진을 삭제하지 못했어요.");
+      window.alert("사진을 삭제하지 못했어요. 잠시 후 다시 시도해주세요.");
     }
   };
 
@@ -49,7 +49,7 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
       await uploadPhotos(date, files);
     } catch (e) {
       console.error("사진 업로드 실패:", e);
-      window.alert(e.message || "사진을 올리지 못했어요.");
+      window.alert("사진을 올리지 못했어요. 잠시 후 다시 시도해주세요.");
     } finally {
       setUploading(false);
       ev.target.value = "";
@@ -81,7 +81,6 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
               {e.mood && <span style={S.metaPill}>{e.mood}</span>}
               {e.place && <span style={S.metaPill}>📍 {e.place}</span>}
               {e.food && <span style={S.metaPill}>🍽 {e.food}</span>}
-              {e.schedule && <span style={S.metaPill}>🗓 {e.schedule}</span>}
               {stamps.map((k) => {
                 const s = STAMPS.find((x) => x.k === k);
                 return s ? <span key={k} style={S.metaPill}>{s.emoji} {s.label}</span> : null;
@@ -166,9 +165,6 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
           }}
         />
       )}
-
-      <div style={S.fieldLabel}>일정</div>
-      <input style={S.input} placeholder="예: 저녁 7시 예약" defaultValue={e.schedule || ""} onBlur={(ev) => set({ schedule: ev.target.value })} />
 
       <div style={S.fieldLabel}>그날의 이야기</div>
       <textarea style={S.textarea} rows={4} placeholder="오늘 있었던 일, 느낀 것들을 적어두면 나중에 함께 꺼내볼 수 있어요." defaultValue={e.note || ""} onBlur={(ev) => set({ note: ev.target.value, note_by: me })} />

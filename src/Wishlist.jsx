@@ -18,7 +18,8 @@ export default function Wishlist({ coupleId, userId, people }) {
     const { error } = await addItem(draft.trim(), userId);
     setBusy(false);
     if (error) {
-      window.alert("추가하지 못했어요: " + error.message);
+      console.error("위시리스트 추가 실패:", error);
+      window.alert("추가하지 못했어요. 잠시 후 다시 시도해주세요.");
       return;
     }
     setDraft("");
@@ -26,12 +27,18 @@ export default function Wishlist({ coupleId, userId, people }) {
 
   const onToggle = async (id, done) => {
     const { error } = await toggleItem(id, done, userId);
-    if (error) window.alert("변경하지 못했어요: " + error.message);
+    if (error) {
+      console.error("위시리스트 변경 실패:", error);
+      window.alert("변경하지 못했어요. 잠시 후 다시 시도해주세요.");
+    }
   };
 
   const onDelete = async (id) => {
     const { error } = await deleteItem(id);
-    if (error) window.alert("삭제하지 못했어요: " + error.message);
+    if (error) {
+      console.error("위시리스트 삭제 실패:", error);
+      window.alert("삭제하지 못했어요. 잠시 후 다시 시도해주세요.");
+    }
   };
 
   return (

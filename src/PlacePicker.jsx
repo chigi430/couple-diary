@@ -74,7 +74,10 @@ export default function PlacePicker({ initialLat, initialLng, onPick, onCancel }
 
         kakao.maps.event.addListener(map, "click", (mouseEvent) => placeAt(map, mouseEvent.latLng));
       })
-      .catch((e) => setErr(e.message));
+      .catch((e) => {
+        console.error("지도 로드 실패:", e);
+        setErr("지도를 불러오지 못했어요. 잠시 후 다시 시도해주세요.");
+      });
 
     return () => {
       alive = false;
