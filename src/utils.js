@@ -93,7 +93,7 @@ function extOf(name) {
 
 // 일기 기록에 실제 내용이 하나라도 있는지 (사진/메모/일정/기분/스탬프)
 export function hasAny(entry) {
-  return (
+  return !!(
     entry &&
     ((entry.photos && entry.photos.length) ||
       entry.note ||

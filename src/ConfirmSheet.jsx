@@ -19,7 +19,7 @@ export default function ConfirmSheet({ title, children, confirmLabel = "확인",
           <button style={S.closeBtn} onClick={onClose}><IconX size={14} /></button>
         </div>
 
-        <div style={{ fontSize: 13.5, color: "var(--text)", lineHeight: 1.6 }}>{children}</div>
+        <div style={{ fontSize: 13.5, color: "var(--text-body)", lineHeight: 1.6 }}>{children}</div>
 
         <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
           <button style={{ ...S.editBtn, flex: 1 }} onClick={onClose}>취소</button>

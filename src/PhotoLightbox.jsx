@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { S } from "./styles";
 import SignedImage, { getSignedUrl } from "./SignedImage";
 import { IconX, IconShare } from "./Icons";
@@ -135,7 +136,7 @@ export default function PhotoLightbox({ photos, initialIndex, onClose }) {
     }
   };
 
-  return (
+  return createPortal(
     <div style={S.lightboxOverlay} onClick={(ev) => ev.stopPropagation()}>
       <div style={S.lightboxTopBar}>
         <span style={S.lightboxCounter}>{photos.length > 1 ? `${index + 1} / ${photos.length}` : ""}</span>
@@ -164,6 +165,7 @@ export default function PhotoLightbox({ photos, initialIndex, onClose }) {
           }}
         />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

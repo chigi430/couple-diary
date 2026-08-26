@@ -189,7 +189,7 @@ export default function Settings({ profile, onSaved, onSignOut }) {
     setBusy(false);
     if (error) {
       console.error("커플 연결 해제 실패:", error);
-      setErr("연결 해제에 실패했어요. 잠시 후 다시 시도해주세요.");
+      toast("연결 해제에 실패했어요. 잠시 후 다시 시도해주세요.");
       return;
     }
     await onSaved();
