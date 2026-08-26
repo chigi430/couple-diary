@@ -29,6 +29,7 @@ export default function Settings({ profile, onSaved, onSignOut }) {
   const [pushBusy, setPushBusy] = useState(false);
   const [pushMsg, setPushMsg] = useState("");
   const [isLatest, setIsLatest] = useState(null); // null=확인 중/실패, true/false=최신 여부
+  const [remoteVersion, setRemoteVersion] = useState(null);
   const [prefs, setPrefs] = useState({
     notify_activity: profile?.notify_activity !== false,
     notify_reminder: profile?.notify_reminder !== false,
@@ -44,7 +45,10 @@ export default function Settings({ profile, onSaved, onSignOut }) {
   useEffect(() => {
     fetch("/version.json", { cache: "no-store" })
       .then((r) => r.json())
-      .then((d) => setIsLatest(d.version === __APP_VERSION__))
+      .then((d) => {
+        setRemoteVersion(d.version);
+        setIsLatest(d.version === __APP_VERSION__);
+      })
       .catch(() => setIsLatest(null));
   }, []);
 
@@ -126,6 +130,14 @@ export default function Settings({ profile, onSaved, onSignOut }) {
     }
   };
 
+  const confirmAndUpdate = async () => {
+    const lines = [`현재 버전: ${__APP_VERSION__}`];
+    if (remoteVersion) lines.push(`최신 버전: ${remoteVersion}`);
+    lines.push("", "캐시를 지우고 새로고침해요. 진행할까요?");
+    if (!window.confirm(lines.join("\n"))) return;
+    await forceUpdate();
+  };
+
   const forceUpdate = async () => {
     try {
       if ("serviceWorker" in navigator) {
@@ -186,7 +198,7 @@ export default function Settings({ profile, onSaved, onSignOut }) {
           <MoreMenu
             btnStyle={S.settingsMoreBtn}
             items={[
-              { label: "최신 버전으로 업데이트", onClick: forceUpdate },
+              { label: "최신 버전으로 업데이트", onClick: confirmAndUpdate },
               { label: "로그아웃", onClick: onSignOut },
               { label: "커플 연결 해제", onClick: leaveCouple, danger: true },
             ]}
@@ -290,7 +302,7 @@ export default function Settings({ profile, onSaved, onSignOut }) {
         {isLatest === false && (
           <>
             {" · 새 버전이 있어요 · "}
-            <button style={S.versionUpdateLink} onClick={forceUpdate}>지금 업데이트</button>
+            <button style={S.versionUpdateLink} onClick={confirmAndUpdate}>지금 업데이트</button>
           </>
         )}
       </div>
