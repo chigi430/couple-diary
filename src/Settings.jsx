@@ -28,6 +28,7 @@ export default function Settings({ profile, onSaved, onSignOut }) {
   const [pushOn, setPushOn] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
   const [pushMsg, setPushMsg] = useState("");
+  const [isLatest, setIsLatest] = useState(null); // null=확인 중/실패, true/false=최신 여부
   const [prefs, setPrefs] = useState({
     notify_activity: profile?.notify_activity !== false,
     notify_reminder: profile?.notify_reminder !== false,
@@ -38,6 +39,13 @@ export default function Settings({ profile, onSaved, onSignOut }) {
   useEffect(() => {
     if (!pushSupported()) return;
     isPushSubscribed().then(setPushOn);
+  }, []);
+
+  useEffect(() => {
+    fetch("/version.json", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => setIsLatest(d.version === __APP_VERSION__))
+      .catch(() => setIsLatest(null));
   }, []);
 
   const { handleProps, handleStyle, sheetStyle, overlayStyle } = useSheetDrag(() => setEditOpen(false));
@@ -273,6 +281,17 @@ export default function Settings({ profile, onSaved, onSignOut }) {
             <label style={S.authLabel}>알림</label>
             <div style={S.authSub}>이 브라우저는 푸시 알림을 지원하지 않아요.</div>
           </div>
+        )}
+      </div>
+
+      <div style={S.versionFooter}>
+        버전 {__APP_VERSION__}
+        {isLatest === true && " · 최신 버전이에요"}
+        {isLatest === false && (
+          <>
+            {" · 새 버전이 있어요 · "}
+            <button style={S.versionUpdateLink} onClick={forceUpdate}>지금 업데이트</button>
+          </>
         )}
       </div>
 

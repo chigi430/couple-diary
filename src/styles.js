@@ -395,4 +395,6 @@ export const S = {
   avatarPickBtn: { position: "relative", cursor: "pointer", border: "none", background: "none", padding: 0 },
   avatarEditBadge: { position: "absolute", right: -2, bottom: -2, width: 24, height: 24, borderRadius: "50%", background: "#D98763", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, border: "2px solid #fff" },
   settingsMoreBtn: { background: "var(--card)", boxShadow: "0 6px 16px rgba(122,74,60,0.1)" },
+  versionFooter: { textAlign: "center", fontSize: 10.5, color: "var(--text-muted2)", padding: "18px 0 6px" },
+  versionUpdateLink: { border: "none", background: "none", padding: 0, color: "#D98763", fontWeight: 700, fontSize: 10.5, cursor: "pointer", textDecoration: "underline" },
 };
