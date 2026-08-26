@@ -29,7 +29,7 @@ export default function AnniversarySheet({ initial, onSave, onClose }) {
 
   return (
     <div style={{ ...S.overlay, ...overlayStyle }} onClick={onClose}>
-      <div style={{ ...S.sheet, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
+      <div style={{ ...S.sheetCompact, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
         <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
           <div style={S.sheetHandle} />
         </div>
@@ -45,7 +45,13 @@ export default function AnniversarySheet({ initial, onSave, onClose }) {
 
         <div style={S.authField}>
           <label style={S.authLabel}>날짜</label>
-          <input style={{ ...S.input, opacity: busy ? 0.7 : 1 }} type="date" value={date} onChange={(e) => setDate(e.target.value)} disabled={busy} />
+          <input
+            style={{ ...S.input, maxWidth: "100%", opacity: busy ? 0.7 : 1 }}
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            disabled={busy}
+          />
         </div>
       </div>
     </div>

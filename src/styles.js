@@ -25,51 +25,51 @@ export const css = `
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg1: #1E1712;
-    --bg2: #221A15;
-    --card: #2A2019;
-    --sheet: #241C17;
-    --soft: #382B21;
-    --soft2: #33271D;
-    --tint: #4A3524;
-    --invite-bg: #362A1A;
-    --invite-bg2: #4A3A22;
-    --danger-bg: #3A2420;
-    --border: #493A2C;
-    --text-strong: #F2E7DD;
-    --text-h1: #F6DCC9;
-    --text-h2: #E9D9CD;
-    --text-body: #D6C3B6;
-    --text-muted: #A6907E;
-    --text-muted2: #8C7A6C;
-    --text-accent: #E8A17C;
-    --text-chip: #C2A996;
-    --tabbar-bg: rgba(30,23,18,0.85);
-    --tabon-bg: linear-gradient(135deg,#4A3524,#3D2C1C);
+    --bg1: #141110;
+    --bg2: #191512;
+    --card: #1F1B18;
+    --sheet: #1C1815;
+    --soft: #262019;
+    --soft2: #221D19;
+    --tint: #3A2C22;
+    --invite-bg: #2A2118;
+    --invite-bg2: #3A2E1E;
+    --danger-bg: #2E1E1C;
+    --border: #322A24;
+    --text-strong: #EDE6DE;
+    --text-h1: #F0D6C3;
+    --text-h2: #E4D6CB;
+    --text-body: #C9B8AC;
+    --text-muted: #A89686;
+    --text-muted2: #8F7E72;
+    --text-accent: #E2A67E;
+    --text-chip: #B39C8C;
+    --tabbar-bg: rgba(20,17,16,0.85);
+    --tabon-bg: linear-gradient(135deg,#3D2E22,#332619);
   }
 }
 :root[data-theme="dark"] {
-  --bg1: #1E1712;
-  --bg2: #221A15;
-  --card: #2A2019;
-  --sheet: #241C17;
-  --soft: #382B21;
-  --soft2: #33271D;
-  --tint: #4A3524;
-  --invite-bg: #362A1A;
-  --invite-bg2: #4A3A22;
-  --danger-bg: #3A2420;
-  --border: #493A2C;
-  --text-strong: #F2E7DD;
-  --text-h1: #F6DCC9;
-  --text-h2: #E9D9CD;
-  --text-body: #D6C3B6;
-  --text-muted: #A6907E;
-  --text-muted2: #8C7A6C;
-  --text-accent: #E8A17C;
-  --text-chip: #C2A996;
-  --tabbar-bg: rgba(30,23,18,0.85);
-  --tabon-bg: linear-gradient(135deg,#4A3524,#3D2C1C);
+  --bg1: #141110;
+  --bg2: #191512;
+  --card: #1F1B18;
+  --sheet: #1C1815;
+  --soft: #262019;
+  --soft2: #221D19;
+  --tint: #3A2C22;
+  --invite-bg: #2A2118;
+  --invite-bg2: #3A2E1E;
+  --danger-bg: #2E1E1C;
+  --border: #322A24;
+  --text-strong: #EDE6DE;
+  --text-h1: #F0D6C3;
+  --text-h2: #E4D6CB;
+  --text-body: #C9B8AC;
+  --text-muted: #A89686;
+  --text-muted2: #8F7E72;
+  --text-accent: #E2A67E;
+  --text-chip: #B39C8C;
+  --tabbar-bg: rgba(20,17,16,0.85);
+  --tabon-bg: linear-gradient(135deg,#3D2E22,#332619);
 }
 @keyframes sheetUp { from { transform: translateY(24px); opacity:0 } to { transform: translateY(0); opacity:1 } }
 @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
@@ -188,6 +188,8 @@ export const S = {
 
   overlay: { position: "fixed", inset: 0, background: "rgba(58,34,28,0.42)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 60, animation: "fadeIn .16s ease", backdropFilter: "blur(2px)" },
   sheet: { width: "100%", maxWidth: 460, background: "var(--sheet)", borderRadius: "22px 22px 0 0", padding: "8px 17px 22px", minHeight: "90vh", maxHeight: "90vh", overflowY: "auto", animation: "sheetUp .22s cubic-bezier(.2,.8,.2,1)" },
+  // 내용이 짧은 시트(확인창 등)는 90vh를 다 채우지 않고 내용만큼만 차지하도록
+  sheetCompact: { width: "100%", maxWidth: 460, background: "var(--sheet)", borderRadius: "22px 22px 0 0", padding: "8px 17px 22px", maxHeight: "90vh", overflowY: "auto", animation: "sheetUp .22s cubic-bezier(.2,.8,.2,1)" },
   sheetHandleZone: { display: "flex", justifyContent: "center", padding: "12px 0 10px", marginTop: -8 },
   sheetHandle: { width: 36, height: 4, borderRadius: 4, background: "var(--border)" },
   sheetHead: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 7 },
@@ -237,7 +239,7 @@ export const S = {
   authMark: { fontSize: 34, color: "#D98763" },
   authTitle: { fontSize: 21, fontWeight: 800, color: "var(--text-h1)", marginTop: 6 },
   authSub: { fontSize: 12.5, color: "var(--text-muted)", marginTop: 5 },
-  authField: { marginBottom: 10 },
+  authField: { marginBottom: 10, overflow: "hidden" },
   authLabel: { fontSize: 12, fontWeight: 700, color: "var(--text-accent)", marginBottom: 5, display: "block" },
   chooserRow: { display: "flex", gap: 7, flexWrap: "wrap" },
   chooser: { width: 38, height: 38, borderRadius: 11, border: "1px solid var(--border)", background: "var(--soft)", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },

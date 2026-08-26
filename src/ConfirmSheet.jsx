@@ -10,7 +10,7 @@ export default function ConfirmSheet({ title, children, confirmLabel = "확인",
 
   return (
     <div style={{ ...S.overlay, ...overlayStyle }} onClick={onClose}>
-      <div style={{ ...S.sheet, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
+      <div style={{ ...S.sheetCompact, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
         <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
           <div style={S.sheetHandle} />
         </div>
