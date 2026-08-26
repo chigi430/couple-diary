@@ -1,16 +1,12 @@
 import React, { useRef, useState } from "react";
 import { S } from "./styles";
 import { MOODS, STAMPS } from "./constants";
-import { prettyTime } from "./utils";
+import { prettyTime, hasAny } from "./utils";
 import SignedImage from "./SignedImage";
 import Avatar from "./Avatar";
 import PlacePicker from "./PlacePicker";
 import PhotoCarousel from "./PhotoCarousel";
 import { IconX, IconPlus } from "./Icons";
-
-export function hasAny(e) {
-  return e && ((e.photos && e.photos.length) || e.note || e.schedule || e.mood || (e.stamps && e.stamps.length));
-}
 
 export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPhotos, deletePhoto, mode, setMode }) {
   const fileRef = useRef(null);
@@ -36,6 +32,15 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
     set({ stamps: next });
   };
 
+  const onDeletePhoto = async (p) => {
+    try {
+      await deletePhoto(p);
+    } catch (e) {
+      console.error("사진 삭제 실패:", e);
+      window.alert(e.message || "사진을 삭제하지 못했어요.");
+    }
+  };
+
   const onPick = async (ev) => {
     const files = ev.target.files;
     if (!files || !files.length) return;
@@ -44,6 +49,7 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
       await uploadPhotos(date, files);
     } catch (e) {
       console.error("사진 업로드 실패:", e);
+      window.alert(e.message || "사진을 올리지 못했어요.");
     } finally {
       setUploading(false);
       ev.target.value = "";
@@ -125,7 +131,7 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
           <div key={p.id} style={S.photoItem}>
             <SignedImage path={p.storage_path} style={S.photoImg} />
             <span style={{ ...S.photoBy, background: who(p.uploaded_by).color }}>{who(p.uploaded_by).emoji}</span>
-            <button style={S.photoDel} onClick={() => deletePhoto(p)}><IconX size={11} /></button>
+            <button style={S.photoDel} onClick={() => onDeletePhoto(p)}><IconX size={11} /></button>
           </div>
         ))}
         {uploading && <div style={S.photoLoading}>올리는 중…</div>}

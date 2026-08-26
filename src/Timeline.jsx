@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { S } from "./styles";
 import { STAMPS } from "./constants";
-import { prettyDate, prettyTime } from "./utils";
+import { prettyDate, prettyTime, hasAny } from "./utils";
 import SignedImage from "./SignedImage";
 import Avatar from "./Avatar";
 import PlacesMap from "./PlacesMap";
@@ -150,8 +150,4 @@ export default function Timeline({ byDate, people, onOpen, autoOpenRecap, onAuto
       {recapOpen && <Recap byDate={byDate} people={people} onClose={() => setRecapOpen(false)} />}
     </div>
   );
-}
-
-function hasAny(entry) {
-  return entry && ((entry.photos && entry.photos.length) || entry.note || entry.schedule || entry.mood || (entry.stamps && entry.stamps.length));
 }

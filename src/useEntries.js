@@ -88,6 +88,7 @@ export function useEntries(coupleId, userId) {
     async (date, fileList) => {
       const entryId = await ensureEntry(date);
       const files = Array.from(fileList || []);
+      let failCount = 0;
       for (const file of files) {
         const { blob, ext } = await compressImage(file);
         const path = `${coupleId}/${entryId}/${uuid()}.${ext}`;
@@ -96,25 +97,32 @@ export function useEntries(coupleId, userId) {
           .upload(path, blob, { contentType: blob.type || "image/jpeg", upsert: false });
         if (upErr) {
           console.error("사진 업로드 실패:", upErr.message);
+          failCount++;
           continue;
         }
-        await supabase.from("photos").insert({
+        const { error: insErr } = await supabase.from("photos").insert({
           entry_id: entryId,
           couple_id: coupleId,
           storage_path: path,
           uploaded_by: userId,
         });
+        if (insErr) {
+          console.error("사진 기록 실패:", insErr.message);
+          failCount++;
+        }
       }
       await fetchAll();
+      if (failCount > 0) throw new Error(`사진 ${failCount}장을 올리지 못했어요.`);
     },
     [coupleId, userId, ensureEntry, fetchAll]
   );
 
   const deletePhoto = useCallback(
     async (photo) => {
-      await supabase.storage.from("photos").remove([photo.storage_path]);
-      await supabase.from("photos").delete().eq("id", photo.id);
+      const { error: rmErr } = await supabase.storage.from("photos").remove([photo.storage_path]);
+      const { error: delErr } = await supabase.from("photos").delete().eq("id", photo.id);
       await fetchAll();
+      if (rmErr || delErr) throw new Error((rmErr || delErr).message);
     },
     [fetchAll]
   );

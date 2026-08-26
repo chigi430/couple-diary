@@ -1,13 +1,14 @@
 import React from "react";
 import { S } from "./styles";
 import { STAMPS, HOLIDAYS } from "./constants";
-import { todayStr, prettyDate } from "./utils";
+import { todayStr, prettyDate, hasAny } from "./utils";
 import SignedImage from "./SignedImage";
+import PhotoCarousel from "./PhotoCarousel";
 
 export default function Today({ byDate, onOpen }) {
   const t = todayStr();
   const e = byDate[t];
-  const has = e && ((e.photos && e.photos.length) || e.note || e.schedule || e.mood || (e.stamps && e.stamps.length));
+  const has = hasAny(e);
   const hol = HOLIDAYS[t];
 
   const recent = Object.keys(byDate)
@@ -28,13 +29,7 @@ export default function Today({ byDate, onOpen }) {
 
         {has ? (
           <div>
-            {e.photos && e.photos.length > 0 && (
-              <div style={S.todayPhotos}>
-                {e.photos.slice(0, 3).map((p) => (
-                  <SignedImage key={p.id} path={p.storage_path} style={S.todayPhoto} />
-                ))}
-              </div>
-            )}
+            {e.photos && e.photos.length > 0 && <PhotoCarousel photos={e.photos} />}
             <div style={S.todayMetaRow}>
               {e.mood && <span style={S.metaPill}>{e.mood}</span>}
               {e.place && <span style={S.metaPill}>📍 {e.place}</span>}

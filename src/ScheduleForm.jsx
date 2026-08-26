@@ -4,6 +4,7 @@ import Avatar from "./Avatar";
 import { IconX } from "./Icons";
 import { toast } from "./toast";
 import MoreMenu from "./MoreMenu";
+import { useSheetDrag } from "./useSheetDrag";
 
 export default function ScheduleForm({ date, existing, meInfo, onSave, onDelete, onClose }) {
   const [title, setTitle] = useState(existing?.title || "");
@@ -44,10 +45,14 @@ export default function ScheduleForm({ date, existing, meInfo, onSave, onDelete,
     toast("일정을 삭제했어요");
   };
 
+  const { handleProps, handleStyle, sheetStyle, overlayStyle } = useSheetDrag(onClose);
+
   return (
-    <div style={S.overlay} onClick={(ev) => { ev.stopPropagation(); onClose(); }}>
-      <div style={S.sheet} onClick={(ev) => ev.stopPropagation()}>
-        <div style={S.sheetHandle} />
+    <div style={{ ...S.overlay, ...overlayStyle }} onClick={(ev) => { ev.stopPropagation(); onClose(); }}>
+      <div style={{ ...S.sheet, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
+        <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
+          <div style={S.sheetHandle} />
+        </div>
         <div style={S.sheetHead}>
           <div style={S.sheetDate}>{existing ? "일정 수정" : "일정 등록"}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>

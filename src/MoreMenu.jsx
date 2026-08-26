@@ -3,7 +3,7 @@ import { S } from "./styles";
 import { IconMore } from "./Icons";
 
 // items: [{ label, onClick, danger?: boolean }]
-export default function MoreMenu({ items }) {
+export default function MoreMenu({ items, btnStyle }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -18,7 +18,7 @@ export default function MoreMenu({ items }) {
 
   return (
     <div style={S.moreMenuWrap} ref={ref}>
-      <button style={S.moreMenuBtn} onClick={() => setOpen((v) => !v)} aria-label="더보기">
+      <button style={{ ...S.moreMenuBtn, ...btnStyle }} onClick={() => setOpen((v) => !v)} aria-label="더보기">
         <IconMore size={16} />
       </button>
       {open && (

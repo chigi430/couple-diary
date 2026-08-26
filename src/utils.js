@@ -91,6 +91,18 @@ function extOf(name) {
   return m ? m[1].toLowerCase() : "jpg";
 }
 
+// 일기 기록에 실제 내용이 하나라도 있는지 (사진/메모/일정/기분/스탬프)
+export function hasAny(entry) {
+  return (
+    entry &&
+    ((entry.photos && entry.photos.length) ||
+      entry.note ||
+      entry.schedule ||
+      entry.mood ||
+      (entry.stamps && entry.stamps.length))
+  );
+}
+
 export function uuid() {
   if (crypto.randomUUID) return crypto.randomUUID();
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {

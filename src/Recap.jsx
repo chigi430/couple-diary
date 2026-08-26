@@ -3,10 +3,8 @@ import { S } from "./styles";
 import { STAMPS } from "./constants";
 import SignedImage from "./SignedImage";
 import { IconX } from "./Icons";
-
-function hasAny(entry) {
-  return entry && ((entry.photos && entry.photos.length) || entry.note || entry.schedule || entry.mood || (entry.stamps && entry.stamps.length));
-}
+import { useSheetDrag } from "./useSheetDrag";
+import { hasAny } from "./utils";
 
 function computeYearStats(byDate, year) {
   const prefix = `${year}-`;
@@ -149,10 +147,14 @@ export default function Recap({ byDate, people, onClose }) {
     },
   ];
 
+  const { handleProps, handleStyle, sheetStyle, overlayStyle } = useSheetDrag(onClose);
+
   return (
-    <div style={S.overlay} onClick={onClose}>
-      <div style={S.recapSheet} onClick={(e) => e.stopPropagation()}>
-        <div style={S.sheetHandle} />
+    <div style={{ ...S.overlay, ...overlayStyle }} onClick={onClose}>
+      <div style={{ ...S.recapSheet, ...sheetStyle }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
+          <div style={S.sheetHandle} />
+        </div>
         <div style={S.recapHead}>
           <div style={S.recapYearNav}>
             <button style={S.recapYearBtn} onClick={prevYear} disabled={yi <= 0}>‹</button>

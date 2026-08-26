@@ -149,12 +149,9 @@ export default function App() {
             <div style={S.brandName}>오늘의 우리</div>
             <div style={S.brandSub}>함께 쌓아가는 날들</div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
-            <div style={{ ...S.userChip, cursor: "pointer" }} onClick={() => setTab("settings")}>
-              <Avatar person={meInfo} size={24} />
-              <span style={S.userName}>{meInfo.display_name || "나"}</span>
-            </div>
-            <button style={S.signOut} onClick={signOut}>로그아웃</button>
+          <div style={{ ...S.userChip, cursor: "pointer" }} onClick={() => setTab("settings")}>
+            <Avatar person={meInfo} size={24} />
+            <span style={S.userName}>{meInfo.display_name || "나"}</span>
           </div>
         </div>
       </header>

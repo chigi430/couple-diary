@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { S } from "./styles";
 import { MONTHS, DOW, HOLIDAYS } from "./constants";
-import { ymd, todayStr, diffDays } from "./utils";
+import { ymd, todayStr, diffDays, hasAny as hasAnyEntry } from "./utils";
 import SignedImage from "./SignedImage";
 
 const BAR_H = 17;
@@ -107,7 +107,7 @@ export default function Calendar({ byDate, onOpen, schedules = [], people = {} }
                 const hol = HOLIDAYS[key];
                 const photos = entry && entry.photos ? entry.photos : [];
                 const hasPhoto = photos.length > 0;
-                const hasAny = entry && (hasPhoto || entry.note || entry.schedule || entry.mood || (entry.stamps && entry.stamps.length));
+                const hasAny = hasAnyEntry(entry);
                 const isToday = key === todayStr();
                 const numColor = hol || dow === 0 ? "#d1584a" : dow === 6 ? "#7d8ba8" : "#6B5D55";
                 const contributors = collectContributors(entry);

@@ -49,8 +49,9 @@ export function useBucketList(coupleId) {
 
   const deleteItem = useCallback(
     async (id) => {
-      await supabase.from("bucket_items").delete().eq("id", id);
-      await fetchAll();
+      const { error } = await supabase.from("bucket_items").delete().eq("id", id);
+      if (!error) await fetchAll();
+      return { error };
     },
     [fetchAll]
   );

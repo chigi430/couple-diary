@@ -9,6 +9,7 @@ import { toast } from "./toast";
 import Avatar from "./Avatar";
 import { IconX, IconPlus } from "./Icons";
 import MoreMenu from "./MoreMenu";
+import { useSheetDrag } from "./useSheetDrag";
 
 const IS_IOS = /iP(hone|od|ad)/.test(navigator.userAgent);
 const IS_STANDALONE = window.navigator.standalone || window.matchMedia("(display-mode: standalone)").matches;
@@ -31,12 +32,15 @@ export default function Settings({ profile, onSaved, onSignOut }) {
     notify_activity: profile?.notify_activity !== false,
     notify_reminder: profile?.notify_reminder !== false,
     notify_anniversary: profile?.notify_anniversary !== false,
+    notify_wishlist: profile?.notify_wishlist !== false,
   });
 
   useEffect(() => {
     if (!pushSupported()) return;
     isPushSubscribed().then(setPushOn);
   }, []);
+
+  const { handleProps, handleStyle, sheetStyle, overlayStyle } = useSheetDrag(() => setEditOpen(false));
 
   const openEdit = () => {
     setName(profile?.display_name || "");
@@ -154,16 +158,16 @@ export default function Settings({ profile, onSaved, onSignOut }) {
 
   return (
     <div style={S.body}>
-      <div style={S.settingsTopRow}>
-        <MoreMenu
-          items={[
-            { label: "로그아웃", onClick: onSignOut },
-            { label: "커플 연결 해제", onClick: leaveCouple, danger: true },
-          ]}
-        />
-      </div>
-
       <div style={S.profileDetailCard}>
+        <div style={S.profileTopMenu}>
+          <MoreMenu
+            btnStyle={S.settingsMoreBtn}
+            items={[
+              { label: "로그아웃", onClick: onSignOut },
+              { label: "커플 연결 해제", onClick: leaveCouple, danger: true },
+            ]}
+          />
+        </div>
         <div style={S.profileAvatarWrap}>
           <Avatar person={profile} size={134} />
           <button style={S.profileEditFab} onClick={openEdit} aria-label="프로필 수정"><IconPlus size={16} /></button>
@@ -235,6 +239,15 @@ export default function Settings({ profile, onSaved, onSignOut }) {
                     <span style={{ ...S.toggleKnob, left: prefs.notify_anniversary ? 21 : 3 }} />
                   </button>
                 </div>
+                <div style={S.toggleRow}>
+                  <span style={S.toggleLabel}>위시리스트 완료 알림</span>
+                  <button
+                    style={{ ...S.toggleSwitch, background: prefs.notify_wishlist ? "#D98763" : "var(--border)" }}
+                    onClick={() => togglePref("notify_wishlist")}
+                  >
+                    <span style={{ ...S.toggleKnob, left: prefs.notify_wishlist ? 21 : 3 }} />
+                  </button>
+                </div>
               </div>
             )}
             {pushMsg && <div style={S.authSub}>{pushMsg}</div>}
@@ -248,9 +261,11 @@ export default function Settings({ profile, onSaved, onSignOut }) {
       </div>
 
       {editOpen && (
-        <div style={S.overlay} onClick={() => setEditOpen(false)}>
-          <div style={S.sheet} onClick={(ev) => ev.stopPropagation()}>
-            <div style={S.sheetHandle} />
+        <div style={{ ...S.overlay, ...overlayStyle }} onClick={() => setEditOpen(false)}>
+          <div style={{ ...S.sheet, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
+            <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
+              <div style={S.sheetHandle} />
+            </div>
             <div style={S.sheetHead}>
               <div style={S.sheetDate}>프로필 수정</div>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>

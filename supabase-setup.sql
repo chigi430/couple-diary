@@ -417,6 +417,8 @@ begin
     select notify_reminder into pref from public.profiles where id = partner_id;
   elsif p_category = 'anniversary' then
     select notify_anniversary into pref from public.profiles where id = partner_id;
+  elsif p_category = 'wishlist' then
+    select notify_wishlist into pref from public.profiles where id = partner_id;
   else
     pref := true; -- 'always' 카테고리(커플연결, 연말리캡)는 토글 없이 항상 발송
   end if;
@@ -566,7 +568,7 @@ create or replace function public.trg_notify_bucket_done() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
   perform public.notify_partner(new.couple_id, coalesce(new.done_by, auth.uid()),
-    '버킷리스트 완료! 🎉', new.title, '/', 'activity');
+    '버킷리스트 완료! 🎉', new.title, '/', 'wishlist');
   return new;
 end $$;
 drop trigger if exists on_bucket_item_done on bucket_items;
@@ -580,6 +582,11 @@ create trigger on_bucket_item_done after update on bucket_items
 alter table profiles add column if not exists notify_activity boolean not null default true;
 alter table profiles add column if not exists notify_reminder boolean not null default true;
 alter table profiles add column if not exists notify_anniversary boolean not null default true;
+
+-- ────────────────────────────────────────────────
+-- 20) 위시리스트 완료 알림도 별도 토글로 분리 (기존엔 notify_activity에 묶여있었음)
+-- ────────────────────────────────────────────────
+alter table profiles add column if not exists notify_wishlist boolean not null default true;
 
 -- ============================================================
 --  끝! "Success. No rows returned" 이 뜨면 정상입니다.

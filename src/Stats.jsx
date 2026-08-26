@@ -2,10 +2,7 @@ import React, { useMemo } from "react";
 import { S } from "./styles";
 import { STAMPS } from "./constants";
 import Avatar from "./Avatar";
-
-function hasAny(entry) {
-  return entry && ((entry.photos && entry.photos.length) || entry.note || entry.schedule || entry.mood || (entry.stamps && entry.stamps.length));
-}
+import { hasAny } from "./utils";
 
 export default function Stats({ byDate, people, onOpenRecap }) {
   const stats = useMemo(() => {

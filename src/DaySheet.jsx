@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { S } from "./styles";
 import { HOLIDAYS } from "./constants";
-import { prettyDate } from "./utils";
+import { prettyDate, hasAny } from "./utils";
 import Avatar from "./Avatar";
-import DiaryTab, { hasAny } from "./DiaryTab";
+import DiaryTab from "./DiaryTab";
 import ScheduleForm from "./ScheduleForm";
 import { IconX, IconPlus } from "./Icons";
 import MoreMenu from "./MoreMenu";
+import { useSheetDrag } from "./useSheetDrag";
 
 export default function DaySheet({
   date,
@@ -32,11 +33,14 @@ export default function DaySheet({
 
   const who = (id) => people[id] || { emoji: "🙂", color: "#D98763", display_name: "?" };
   const meInfo = who(me);
+  const { handleProps, handleStyle, sheetStyle, overlayStyle } = useSheetDrag(onClose);
 
   return (
-    <div style={S.overlay} onClick={onClose}>
-      <div style={S.sheet} onClick={(ev) => ev.stopPropagation()}>
-        <div style={S.sheetHandle} />
+    <div style={{ ...S.overlay, ...overlayStyle }} onClick={onClose}>
+      <div style={{ ...S.sheet, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
+        <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
+          <div style={S.sheetHandle} />
+        </div>
         <div style={S.sheetHead}>
           <div style={S.sheetDate}>
             {prettyDate(date)}

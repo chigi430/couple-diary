@@ -15,9 +15,23 @@ export default function Wishlist({ coupleId, userId, people }) {
   const onAdd = async () => {
     if (!draft.trim() || busy) return;
     setBusy(true);
-    await addItem(draft.trim(), userId);
+    const { error } = await addItem(draft.trim(), userId);
     setBusy(false);
+    if (error) {
+      window.alert("추가하지 못했어요: " + error.message);
+      return;
+    }
     setDraft("");
+  };
+
+  const onToggle = async (id, done) => {
+    const { error } = await toggleItem(id, done, userId);
+    if (error) window.alert("변경하지 못했어요: " + error.message);
+  };
+
+  const onDelete = async (id) => {
+    const { error } = await deleteItem(id);
+    if (error) window.alert("삭제하지 못했어요: " + error.message);
   };
 
   return (
@@ -49,10 +63,10 @@ export default function Wishlist({ coupleId, userId, people }) {
               <div style={S.wlList}>
                 {todo.map((it, i) => (
                   <div key={it.id} style={{ ...S.wlItem, ...S.listPop, animationDelay: `${Math.min(i * 30, 300)}ms` }}>
-                    <button style={S.wlCheck} onClick={() => toggleItem(it.id, true, userId)} aria-label="완료 표시" />
+                    <button style={S.wlCheck} onClick={() => onToggle(it.id, true)} aria-label="완료 표시" />
                     <span style={S.wlTitle}>{it.title}</span>
                     <Avatar person={people?.[it.created_by]} size={18} />
-                    <button style={S.wlDel} onClick={() => deleteItem(it.id)}>
+                    <button style={S.wlDel} onClick={() => onDelete(it.id)}>
                       <IconX size={13} />
                     </button>
                   </div>
@@ -68,14 +82,14 @@ export default function Wishlist({ coupleId, userId, people }) {
                     <div key={it.id} style={{ ...S.wlItem, ...S.listPop, animationDelay: `${Math.min(i * 30, 300)}ms` }}>
                       <button
                         style={{ ...S.wlCheck, ...S.wlCheckOn }}
-                        onClick={() => toggleItem(it.id, false, userId)}
+                        onClick={() => onToggle(it.id, false)}
                         aria-label="완료 취소"
                       >
                         <IconCheck size={13} />
                       </button>
                       <span style={{ ...S.wlTitle, ...S.wlTitleDone }}>{it.title}</span>
                       <Avatar person={people?.[it.done_by]} size={18} />
-                      <button style={S.wlDel} onClick={() => deleteItem(it.id)}>
+                      <button style={S.wlDel} onClick={() => onDelete(it.id)}>
                         <IconX size={13} />
                       </button>
                     </div>
