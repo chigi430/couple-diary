@@ -50,7 +50,7 @@ export default function Today({ byDate, people, onOpen }) {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-  const RECENT_COLLAPSE_RANGE = 130;
+  const RECENT_COLLAPSE_RANGE = 230;
   const RECENT_MAX_H = 118;
   const collapseP = Math.min(1, scrollY / RECENT_COLLAPSE_RANGE);
 
