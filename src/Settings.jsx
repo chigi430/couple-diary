@@ -54,7 +54,9 @@ export default function Settings({ profile, onSaved, onSignOut }) {
           if (!res.ok) return;
           const list = await res.json();
           const idx = list.findIndex((e) => e.version === __APP_VERSION__);
-          setChangelogEntries(idx === -1 ? list : list.slice(0, idx));
+          // 내 버전이 목록에 없으면(너무 오래됐거나 특정 배포판) 어디까지가 새 내용인지 알 수 없으니
+          // 이미 봤을 수도 있는 옛날 내역을 통째로 보여주지 않고 그냥 빈 목록(= 일반 안내 문구)으로 둠
+          setChangelogEntries(idx === -1 ? [] : list.slice(0, idx));
         } catch {
           // 변경 내역 조회는 실패해도 업데이트 자체는 진행 가능하게 조용히 무시
         }
