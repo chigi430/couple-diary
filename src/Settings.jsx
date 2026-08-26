@@ -147,9 +147,18 @@ export default function Settings({ profile, onSaved, onSignOut }) {
     }
     const lines = [];
     if (changelogEntries.length > 0) {
+      const grouped = [];
       changelogEntries.forEach((entry) => {
-        lines.push(`📌 ${entry.date}`);
-        entry.notes.forEach((n) => lines.push(`  · ${n}`));
+        const last = grouped[grouped.length - 1];
+        if (last && last.date === entry.date) {
+          last.notes.push(...entry.notes);
+        } else {
+          grouped.push({ date: entry.date, notes: [...entry.notes] });
+        }
+      });
+      grouped.forEach((g) => {
+        lines.push(`📌 ${g.date}`);
+        g.notes.forEach((n) => lines.push(`  · ${n}`));
         lines.push("");
       });
     } else {
