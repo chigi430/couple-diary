@@ -30,7 +30,8 @@ export default function App() {
   const [autoRecap, setAutoRecap] = useState(() => (wantsRecap ? Date.now() : null));
   const [selected, setSelected] = useState(null);
   const [nowTick, setNowTick] = useState(Date.now());
-  const tabbarHidden = useHideOnScroll();
+  // 탐색 수단인 하단 탭은 "최근 우리"보다 더 확실하게 스크롤해야 숨도록 임계값을 넉넉히 둠
+  const tabbarHidden = useHideOnScroll({ threshold: 32, topGuard: 48 });
 
   // 리캡 알림 클릭으로 들어온 경우, 주소창의 ?recap=1 은 한 번 쓰고 지운다
   useEffect(() => {

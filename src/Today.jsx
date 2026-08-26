@@ -37,7 +37,8 @@ export default function Today({ byDate, people, onOpen }) {
   const sentinelRef = useRef(null);
 
   // 아래로 스크롤하면 "최근 우리" 스트립을 접어서 숨기고, 위로 스크롤하면 다시 펼침 (스크롤 거리가 아니라 방향으로 판단)
-  const recentHidden = useHideOnScroll();
+  // 하단 메뉴 탭(App.jsx)보다는 조금 더 쉽게 접히되, 너무 예민하지 않도록 임계값을 넉넉하게 둠
+  const recentHidden = useHideOnScroll({ threshold: 18, topGuard: 36 });
   const RECENT_MAX_H = 118;
 
   useEffect(() => {
@@ -100,8 +101,7 @@ export default function Today({ byDate, people, onOpen }) {
             maxHeight: recentHidden ? 0 : RECENT_MAX_H,
             marginTop: recentHidden ? 0 : 17,
             opacity: recentHidden ? 0 : 1,
-            transform: recentHidden ? "translateY(-16px) scale(0.94)" : "translateY(0) scale(1)",
-            transition: "max-height .28s ease, margin-top .28s ease, opacity .22s ease, transform .28s ease",
+            transition: "max-height .28s ease, margin-top .28s ease, opacity .2s ease",
           }}
         >
           <div style={S.recentHead}>최근 우리</div>
