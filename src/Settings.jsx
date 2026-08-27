@@ -36,7 +36,7 @@ export default function Settings({ profile, coupleId, onSaved, onSignOut }) {
   const [updateConfirmOpen, setUpdateConfirmOpen] = useState(false);
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
-  const { reports } = useBugReports(coupleId);
+  const { reports, addReport, deployReport } = useBugReports(coupleId);
   const pendingDeployCount = reports.filter((r) => r.status === "pending_deploy").length;
   const [prefs, setPrefs] = useState({
     notify_activity: profile?.notify_activity !== false,
@@ -428,7 +428,13 @@ export default function Settings({ profile, coupleId, onSaved, onSignOut }) {
       )}
 
       {reportOpen && (
-        <BugReportSheet coupleId={coupleId} userId={profile.id} onClose={() => setReportOpen(false)} />
+        <BugReportSheet
+          userId={profile.id}
+          reports={reports}
+          addReport={addReport}
+          deployReport={deployReport}
+          onClose={() => setReportOpen(false)}
+        />
       )}
 
       {leaveConfirmOpen && (

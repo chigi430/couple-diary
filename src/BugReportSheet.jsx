@@ -3,7 +3,6 @@ import { S } from "./styles";
 import { IconX } from "./Icons";
 import MoreMenu from "./MoreMenu";
 import { useSheetDrag } from "./useSheetDrag";
-import { useBugReports } from "./useBugReports";
 import { toast } from "./toast";
 import SignedImage from "./SignedImage";
 
@@ -15,8 +14,10 @@ const STATUS_STYLE = {
   wontfix: S.reportStatusWontfix,
 };
 
-export default function BugReportSheet({ coupleId, userId, onClose }) {
-  const { reports, addReport, deployReport } = useBugReports(coupleId);
+// reports/addReport/deployReport는 Settings.jsx에서 useBugReports()로 한 번만 만들어서 내려받는다 —
+// 여기서 또 호출하면 같은 이름의 realtime 채널을 두 번 구독하게 돼서 Supabase가 에러를 던진다
+// ("tried to subscribe multiple times"), 그러면 에러 경계가 없어서 화면 전체가 하얗게 죽는다.
+export default function BugReportSheet({ userId, reports, addReport, deployReport, onClose }) {
   const { handleProps, handleStyle, sheetStyle, overlayStyle } = useSheetDrag(onClose);
   const fileRef = useRef(null);
   const [description, setDescription] = useState("");
