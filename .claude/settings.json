@@ -7,7 +7,14 @@
       "PowerShell(npm run build)",
       "PowerShell(npm run dev)",
       "PowerShell(npm run preview)",
-      "Bash(netstat*)"
+      "Bash(netstat*)",
+      "Bash(npm run build*)",
+      "Bash(npm run dev*)",
+      "Bash(npm run preview*)",
+      "PowerShell(npm run build*)",
+      "PowerShell(npm run dev*)",
+      "PowerShell(npm run preview*)",
+      "Bash(curl -sf http://localhost:5173*)"
     ]
   }
 }
