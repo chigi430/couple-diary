@@ -7,6 +7,9 @@ import { toast } from "./toast";
 import SignedImage from "./SignedImage";
 
 const STATUS_LABEL = { open: "점검중", pending_deploy: "배포대기", fixed: "수정완료", wontfix: "보류" };
+// 배포 승인 권한이 없는 사람(파트너)에게는 "배포대기/PR 준비됨" 같은 개발 내부 상태를 그대로 보여줄
+// 필요가 없어서 뭉뚱그린 라벨을 따로 둔다 — resolution_note/배포 버튼도 이 사람들에겐 아예 안 보여줌.
+const STATUS_LABEL_VIEWER = { open: "점검중", pending_deploy: "처리중", fixed: "처리완료", wontfix: "확인완료" };
 const STATUS_STYLE = {
   open: S.reportStatusOpen,
   pending_deploy: S.reportStatusPending,
@@ -14,10 +17,14 @@ const STATUS_STYLE = {
   wontfix: S.reportStatusWontfix,
 };
 
+// 배포 승인 버튼/처리 상세는 유지보수 담당(창환님) 계정에만 노출 — 민감 정보는 아니라 .env에 그냥 둠.
+const MAINTAINER_USER_ID = import.meta.env.VITE_MAINTAINER_USER_ID;
+
 // reports/addReport/deployReport는 Settings.jsx에서 useBugReports()로 한 번만 만들어서 내려받는다 —
 // 여기서 또 호출하면 같은 이름의 realtime 채널을 두 번 구독하게 돼서 Supabase가 에러를 던진다
 // ("tried to subscribe multiple times"), 그러면 에러 경계가 없어서 화면 전체가 하얗게 죽는다.
 export default function BugReportSheet({ userId, reports, addReport, deployReport, onClose }) {
+  const isMaintainer = userId === MAINTAINER_USER_ID;
   const { handleProps, handleStyle, sheetStyle, overlayStyle } = useSheetDrag(onClose);
   const fileRef = useRef(null);
   const [description, setDescription] = useState("");
@@ -109,11 +116,13 @@ export default function BugReportSheet({ userId, reports, addReport, deployRepor
               <div key={r.id} style={{ ...S.reportItem, ...S.listPop, animationDelay: `${Math.min(i * 30, 300)}ms` }}>
                 <div style={S.reportItemHead}>
                   <span style={S.reportDesc}>{r.description}</span>
-                  <span style={{ ...S.reportStatus, ...STATUS_STYLE[r.status] }}>{STATUS_LABEL[r.status]}</span>
+                  <span style={{ ...S.reportStatus, ...STATUS_STYLE[r.status] }}>
+                    {isMaintainer ? STATUS_LABEL[r.status] : STATUS_LABEL_VIEWER[r.status]}
+                  </span>
                 </div>
                 {r.photo_path && <SignedImage path={r.photo_path} style={S.reportPhotoThumb} />}
-                {r.resolution_note && <div style={S.reportNote}>{r.resolution_note}</div>}
-                {r.status === "pending_deploy" && (
+                {isMaintainer && r.resolution_note && <div style={S.reportNote}>{r.resolution_note}</div>}
+                {isMaintainer && r.status === "pending_deploy" && (
                   <div style={S.reportDecideRow}>
                     <button style={S.reportWaitBtn} onClick={onWait} disabled={deployBusyId === r.id}>대기</button>
                     <button style={S.reportDeployBtn} onClick={() => onDeploy(r.id)} disabled={deployBusyId === r.id}>

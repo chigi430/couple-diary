@@ -60,14 +60,15 @@ async function handleDeploy(req: Request) {
   const { data: userData, error: userErr } = await supabase.auth.getUser(token);
   if (userErr || !userData.user) return json({ error: "unauthorized" }, 401);
 
+  // 배포 실행은 유지보수 담당(창환님) 계정만 — 커플 상대방은 UI에서도 안 보이지만,
+  // 엔드포인트를 직접 호출할 가능성까지 막기 위해 서버에서도 확인한다.
+  if (userData.user.id !== MAINTENANCE_OWNER_USER_ID) return json({ error: "forbidden" }, 403);
+
   const { report_id } = await req.json();
   if (!report_id) return json({ error: "report_id required" }, 400);
 
   const { data: report, error: reportErr } = await supabase.from("bug_reports").select("*").eq("id", report_id).single();
   if (reportErr || !report) return json({ error: "report not found" }, 404);
-
-  const { data: profile } = await supabase.from("profiles").select("couple_id").eq("id", userData.user.id).single();
-  if (!profile || profile.couple_id !== report.couple_id) return json({ error: "forbidden" }, 403);
 
   if (report.status !== "pending_deploy" || !report.fix_pr_url) {
     return json({ error: "이 제보는 아직 배포할 준비가 안 됐어요." }, 400);
