@@ -7,15 +7,17 @@ import { pushSupported, subscribePush, unsubscribePush, syncPushSubscription } f
 import { isDarkActive, setTheme } from "./theme";
 import { toast } from "./toast";
 import Avatar from "./Avatar";
-import { IconX, IconPlus } from "./Icons";
+import { IconX, IconPlus, IconFlag } from "./Icons";
 import MoreMenu from "./MoreMenu";
 import ConfirmSheet from "./ConfirmSheet";
+import BugReportSheet from "./BugReportSheet";
 import { useSheetDrag } from "./useSheetDrag";
+import { useBugReports } from "./useBugReports";
 
 const IS_IOS = /iP(hone|od|ad)/.test(navigator.userAgent);
 const IS_STANDALONE = window.navigator.standalone || window.matchMedia("(display-mode: standalone)").matches;
 
-export default function Settings({ profile, onSaved, onSignOut }) {
+export default function Settings({ profile, coupleId, onSaved, onSignOut }) {
   const fileRef = useRef(null);
   const [editOpen, setEditOpen] = useState(false);
   const [name, setName] = useState(profile?.display_name || "");
@@ -33,6 +35,9 @@ export default function Settings({ profile, onSaved, onSignOut }) {
   const [changelogEntries, setChangelogEntries] = useState([]);
   const [updateConfirmOpen, setUpdateConfirmOpen] = useState(false);
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const { reports } = useBugReports(coupleId);
+  const pendingDeployCount = reports.filter((r) => r.status === "pending_deploy").length;
   const [prefs, setPrefs] = useState({
     notify_activity: profile?.notify_activity !== false,
     notify_reminder: profile?.notify_reminder !== false,
@@ -322,6 +327,17 @@ export default function Settings({ profile, onSaved, onSignOut }) {
             <div style={S.authSub}>이 브라우저는 푸시 알림을 지원하지 않아요.</div>
           </div>
         )}
+
+        <div style={S.authField}>
+          <label style={S.authLabel}>오류 제보</label>
+          <div style={S.reportRow}>
+            <span style={S.toggleLabel}>이상한 점을 발견하면 알려주세요</span>
+            <button style={{ ...S.editBtn, width: "auto", padding: "8px 14px", display: "flex", alignItems: "center", gap: 6 }} onClick={() => setReportOpen(true)}>
+              <IconFlag size={14} /> 제보하기
+              {pendingDeployCount > 0 && <span style={S.reportBadgeDot}>{pendingDeployCount}</span>}
+            </button>
+          </div>
+        </div>
       </div>
 
       <div style={S.versionFooter}>
@@ -409,6 +425,10 @@ export default function Settings({ profile, onSaved, onSignOut }) {
           )}
           <div style={{ fontSize: 12, color: "var(--text-muted2)" }}>캐시를 지우고 새로고침해요.</div>
         </ConfirmSheet>
+      )}
+
+      {reportOpen && (
+        <BugReportSheet coupleId={coupleId} userId={profile.id} onClose={() => setReportOpen(false)} />
       )}
 
       {leaveConfirmOpen && (

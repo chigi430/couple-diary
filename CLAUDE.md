@@ -39,6 +39,7 @@
 - 오늘 탭: 오늘 기록 아래로 무한스크롤 피드(지난 기록을 10개씩 페이지네이션해서 이어서 로드). 사진 캐러셀은 활성 슬라이드 기준 앞뒤 1장만 렌더링해 지연 로딩(성능 때문에 필수 — 전체 다 렌더링하면 피드가 무거워짐)
 - 스크롤 다운 시 하단 탭바와 "최근 우리" 스트립이 자동으로 숨고, 스크롤 업하면 다시 나타남 (`useHideOnScroll.js`)
 - 푸시 알림: 상대방 일기/사진/일정 작성 시 즉시 알림, 위시리스트 완료 시 알림, 커플 연결 시 알림, 매일 저녁 9시 미작성 리마인더, 기념일/D-day(매년·100일 단위) 알림, 12월 1일 연말 리캡 알림. 알림 카테고리별(활동/리마인더/기념일/위시리스트) on-off 가능 (자세한 구조는 아래 "푸시 알림 구조" 참고)
+- 설정 탭에 "오류 제보" 기능: 설명+사진으로 문제 제보 → 야간 점검 루틴이 판단/수정 → 앱 안에서 상태 확인 + [배포] 승인 (자세한 구조는 아래 "유지보수 자동화" 참고)
 
 ## 디자인 시스템 / UI 패턴
 
@@ -67,6 +68,20 @@
 - **비밀값**: VAPID 비밀키·CRON_SECRET은 Supabase Edge Function secrets로, `send-push` 호출 URL/시크릿은 Supabase Vault(`vault.decrypted_secrets`)로 관리. 전부 git에는 안 올라감.
 - Edge Function을 수정했으면 `npx supabase functions deploy <이름> --no-verify-jwt`로 재배포 필요 (수정만으로는 자동 반영 안 됨).
 - 테스트용 "테스트 알림 보내기" 버튼은 배포판에는 넣지 않기로 함(제거 완료). 발송 테스트가 필요하면 `curl`로 `send-push` Edge Function을 직접 호출하거나, `daily-check`를 수동 invoke해서 확인할 것.
+
+## 유지보수 자동화 (오류 제보 + 야간 점검)
+
+문제가 생기면 사람이 매번 "점검해줘"라고 말하지 않아도 스스로 찾아서 고치는 체계. 2026-08-28에 도입, `C:\Users\박창환\.claude\plans\quizzical-snuggling-rossum.md`에 설계 배경이 남아있음.
+
+- **오류 제보(Part A, 완성)**: 설정 → 오류 제보에서 설명+사진(선택)으로 제보 → `bug_reports` 테이블에 저장. `src/useBugReports.js`(CRUD+realtime), `src/BugReportSheet.jsx`(제보 폼 + 과거 제보 목록). 사진은 새 버킷 없이 기존 `photos` 비공개 버킷을 `${coupleId}/bugreports/...` 경로로 재사용.
+- **상태 흐름**: `open`(접수, 점검 전) → `pending_deploy`(실제 버그로 판단, 수정 PR 준비됨) → 사용자가 배포 선택 시 `fixed`, 대기 선택 시 그대로 → 버그가 아니면 `wontfix`. `resolution_note`에 판단/조치 내용이 남음.
+- **배포 승인은 반드시 앱 안의 [배포]/[대기] 버튼으로만** — `pending_deploy` 상태인 제보를 "설정 → 오류 제보" 목록에서 열면 버튼이 뜬다. **채팅으로 "배포해"라고 말해도 그걸로 배포를 실행하지 않는다** (예전엔 그런 방식으로 설계했다가 사용자가 명시적으로 반대해서 지금 방식으로 바뀜 — 세션이 이 규칙을 착각하지 않도록 여기 명시).
+- **`supabase/functions/maintenance-bot`**: 두 가지 인증 경로를 한 함수에서 처리.
+  - `x-cron-secret`(시크릿 `MAINTENANCE_BOT_SECRET`) 인증 — 야간 점검 루틴 전용. `{action:"list"}`로 열린 제보 + 서버 상태 지표 조회(`maintenance_health()` RPC — `push_subscriptions` 수, `cron.job` 활성 여부, `net._http_response` 최근 상태코드; `net`/`cron` 스키마는 PostgREST에 안 잡혀서 이 RPC로 우회), `{action:"update_report",...}`로 판단 결과 기록, `{action:"notify",message}`로 창환님 계정(`MAINTENANCE_OWNER_USER_ID` 시크릿 = chigi430@gmail.com 프로필, 커플 전체가 아니라 이 계정 한정)에만 웹푸시 발송.
+  - `/deploy` 경로 — 앱의 [배포] 버튼 전용, 사용자 로그인 JWT로 인증 + couple 소속 확인 후 GitHub API로 `fix_pr_url`의 PR을 머지(squash). 머지가 main push가 되므로 Vercel이 그대로 자동 배포. GitHub 토큰은 시크릿 `GITHUB_TOKEN`(저장소 `chigi430/couple-diary` 전용 fine-grained PAT, Contents+Pull requests 권한만).
+- **`maintenance-log.md`**(레포 루트, git 추적): 제보 처리/점검 조치 내역을 날짜별로 기록. "요즘 뭐 고쳤어?" 질문엔 이 파일 기준으로 답할 것 — 세션이 바뀌어도 이 파일을 보면 지금까지 뭘 처리했는지 알 수 있음.
+- **매일 자정 점검 루틴(Part B)**: 클라우드에서 도는 이 부분은 API로 대신 만들지 않고 **사용자가 claude.ai/code/routines(또는 CLI `/schedule`)에서 직접 등록**해야 함(등록 문구는 계획 파일 Part B 5번 항목 참고). 등록 전 사용자가 준비해야 하는 것: ① 계정에 Claude Code on the web 루틴 기능이 있는지 확인(Pro/Max/Team 필요), ② 위 프롬프트로 매일 00시경 스케줄 등록, ③ GitHub fine-grained PAT 발급해서 전달 → `GITHUB_TOKEN` 시크릿으로 등록. 이 셋이 준비되기 전까지는 오류 제보를 접수는 받지만 야간 자동 판단/수정은 안 돎(제보 목록에 계속 `open`으로만 남음) — 정상 동작이니 당황하지 말 것.
+- **스키마 변경은 절대 자동 적용 안 함**(고정 정책) — 야간 루틴이 `supabase-setup.sql` 변경이 필요해 보이는 버그를 만나면 코드는 고치지 말고 `open` 상태 그대로 "사람 승인 필요"라고만 기록하게 설계돼 있음.
 
 ## 다른 PC에서 이어서 작업하기
 

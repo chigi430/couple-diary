@@ -588,6 +588,68 @@ alter table profiles add column if not exists notify_anniversary boolean not nul
 -- ────────────────────────────────────────────────
 alter table profiles add column if not exists notify_wishlist boolean not null default true;
 
+-- ────────────────────────────────────────────────
+-- 21) 오류 제보 (설정 → 오류 제보) + 야간 유지보수 루틴이 남기는 처리 결과
+--     status: open(접수) → pending_deploy(수정 PR 준비됨, 배포 여부 대기) → fixed/wontfix
+--     fix_branch/fix_pr_url은 야간 루틴이 준비한 브랜치/PR, 앱의 [배포] 버튼이 이걸로 머지를 수행함
+-- ────────────────────────────────────────────────
+create table if not exists bug_reports (
+  id uuid primary key default gen_random_uuid(),
+  couple_id uuid not null references couples(id) on delete cascade,
+  reported_by uuid references auth.users(id),
+  description text not null,
+  photo_path text,
+  status text not null default 'open'
+    check (status in ('open','pending_deploy','fixed','wontfix')),
+  resolution_note text,
+  fix_branch text,
+  fix_pr_url text,
+  created_at timestamptz default now(),
+  resolved_at timestamptz
+);
+alter table bug_reports enable row level security;
+
+drop policy if exists "couple bug reports" on bug_reports;
+create policy "couple bug reports" on bug_reports
+  for all using (couple_id = public.my_couple_id()) with check (couple_id = public.my_couple_id());
+
+do $$
+begin
+  begin
+    alter publication supabase_realtime add table bug_reports;
+  exception when duplicate_object then null;
+  end;
+end $$;
+
+-- ────────────────────────────────────────────────
+-- 22) 야간 유지보수 루틴이 조회하는 서버 상태 지표
+--     net/cron 스키마는 PostgREST에 노출되지 않아 supabase-js .from()으로 못 읽으므로,
+--     security definer 함수로 감싸서 maintenance-bot Edge Function이 rpc()로 호출한다.
+-- ────────────────────────────────────────────────
+create or replace function public.maintenance_health()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  result jsonb;
+begin
+  select jsonb_build_object(
+    'push_subscription_count', (select count(*) from push_subscriptions),
+    'cron_jobs', (
+      select coalesce(jsonb_agg(jsonb_build_object('jobname', jobname, 'active', active, 'schedule', schedule)), '[]'::jsonb)
+      from cron.job
+    ),
+    'recent_http_responses', (
+      select coalesce(jsonb_agg(jsonb_build_object('status_code', status_code, 'created', created)), '[]'::jsonb)
+      from (select status_code, created from net._http_response order by created desc limit 20) t
+    )
+  ) into result;
+  return result;
+end;
+$$;
+
 -- ============================================================
 --  끝! "Success. No rows returned" 이 뜨면 정상입니다.
 -- ============================================================

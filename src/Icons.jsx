@@ -93,6 +93,13 @@ export const IconMore = (props) => (
   </Base>
 );
 
+export const IconFlag = (props) => (
+  <Base {...props}>
+    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+    <line x1="4" y1="22" x2="4" y2="3" />
+  </Base>
+);
+
 export const IconShare = (props) => (
   <Base {...props}>
     <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />

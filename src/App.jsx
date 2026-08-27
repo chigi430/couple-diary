@@ -230,7 +230,7 @@ export default function App() {
       ) : tab === "wishlist" ? (
         <Wishlist coupleId={coupleId} userId={userId} people={people} />
       ) : (
-        <Settings profile={profile} onSaved={loadProfile} onSignOut={signOut} />
+        <Settings profile={profile} coupleId={coupleId} onSaved={loadProfile} onSignOut={signOut} />
       )}
 
       <nav
