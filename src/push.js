@@ -20,15 +20,7 @@ export async function isPushSubscribed() {
   return !!sub;
 }
 
-export async function subscribePush(userId) {
-  const reg = await navigator.serviceWorker.ready;
-  let sub = await reg.pushManager.getSubscription();
-  if (!sub) {
-    sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-    });
-  }
+async function saveSubscription(userId, sub) {
   const json = sub.toJSON();
   const { error } = await supabase.from("push_subscriptions").upsert(
     {
@@ -40,8 +32,42 @@ export async function subscribePush(userId) {
     },
     { onConflict: "endpoint" }
   );
-  if (error) throw error;
+  return error;
+}
+
+export async function subscribePush(userId) {
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if (!sub) {
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+  }
+  const error = await saveSubscription(userId, sub);
+  if (error) {
+    // 브라우저는 구독됐는데 DB 저장은 실패한 상태로 남으면, 다음부터 토글이
+    // 계속 "켜짐"으로 보이면서 실제로는 알림이 안 가는 상황이 생김 — 구독 취소해서
+    // 브라우저/DB 상태를 다시 맞춰주고 사용자가 재시도할 수 있게 함.
+    await sub.unsubscribe();
+    throw error;
+  }
   return sub;
+}
+
+// 브라우저에는 이미 구독이 있는데 DB 행이 지워졌거나(예: 만료 자동정리) 처음부터
+// 저장에 실패했던 경우를 조용히 복구하기 위한 함수. 새로 구독을 만들지는 않는다.
+export async function syncPushSubscription(userId) {
+  if (!pushSupported()) return false;
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.getSubscription();
+  if (!sub) return false;
+  const error = await saveSubscription(userId, sub);
+  if (error) {
+    console.error("push subscription sync failed:", error);
+    return false;
+  }
+  return true;
 }
 
 export async function unsubscribePush() {

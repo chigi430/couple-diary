@@ -3,7 +3,7 @@ import { supabase } from "./supabaseClient";
 import { S } from "./styles";
 import { EMOJI_CHOICES, COLOR_CHOICES } from "./constants";
 import { compressImage, uuid } from "./utils";
-import { pushSupported, isPushSubscribed, subscribePush, unsubscribePush } from "./push";
+import { pushSupported, subscribePush, unsubscribePush, syncPushSubscription } from "./push";
 import { isDarkActive, setTheme } from "./theme";
 import { toast } from "./toast";
 import Avatar from "./Avatar";
@@ -42,8 +42,10 @@ export default function Settings({ profile, onSaved, onSignOut }) {
 
   useEffect(() => {
     if (!pushSupported()) return;
-    isPushSubscribed().then(setPushOn);
-  }, []);
+    // 브라우저엔 구독이 남아있는데 DB 행이 없는 경우(저장 실패/자동정리 등)를
+    // 매번 조용히 복구 — 안 그러면 토글은 계속 "켜짐"으로 보이는데 실제 알림은 안 감.
+    syncPushSubscription(profile.id).then(setPushOn);
+  }, [profile.id]);
 
   useEffect(() => {
     fetch("/version.json", { cache: "no-store" })
