@@ -93,6 +93,7 @@
    - `VITE_SUPABASE_URL`, `VITE_SUPABASE_KEY` — Supabase 대시보드 → Settings → API Keys
    - `VITE_KAKAO_MAP_APP_KEY` — Kakao Developers → 내 애플리케이션 → 앱 키 → JavaScript 키
    - `VITE_VAPID_PUBLIC_KEY` — 푸시 알림용 공개키. 기존에 생성해둔 값이 있으면 그걸 그대로 쓰면 되고(비밀키와 짝이 맞아야 하므로 새로 만들면 안 됨), 안 가지고 있으면 물어볼 것.
+   - `VITE_MAINTAINER_USER_ID` — 오류 제보 화면에서 배포 버튼 등 유지보수 상세정보를 볼 수 있는 계정(창환님 profiles.id). 비밀값 아님, `.env.example`에 실제 값이 이미 적혀 있으니 그대로 복사하면 됨. 단, **DB를 초기화해서 계정을 다시 만든 경우엔 이 값이 옛날 계정 id라 안 맞을 수 있음** — 그럴 땐 `select id from profiles where display_name=...` 등으로 새 id를 찾아서 `.env.example`과 Vercel 프로젝트 환경변수 양쪽 다 갱신하고 재배포해야 반영됨(Vite는 빌드 시점에 값을 박아 넣어서, Vercel 쪽 환경변수도 별도로 맞아야 함).
 4. `npm run dev`로 실행
 
 Supabase/Vercel/Kakao 설정은 전부 클라우드에 이미 되어 있어서 추가 설정 없이 그대로 이어짐 (Kakao Web 플랫폼 도메인에 `http://localhost:5173`이 등록돼 있어 포트만 같으면 어느 PC에서든 지도 기능도 동작). Edge Function 배포/시크릿 설정도 클라우드 쪽이라 새 PC에서 다시 할 필요 없음 — 다만 Edge Function 코드를 새 PC에서 수정해서 재배포하려면 그 PC에서 `npx supabase login` → `npx supabase link --project-ref heksenfpxztwwstbqkll` 한 번은 해줘야 함.
