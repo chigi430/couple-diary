@@ -85,18 +85,32 @@
 
 ## 다른 PC에서 이어서 작업하기
 
-이 저장소는 Public GitHub라 코드는 그대로 클론하면 되지만, **`.env` 파일은 git에 없어서 새 PC마다 직접 만들어야 함**:
+회사/집 등 여러 PC를 오가며 작업하는 걸 전제로 함. **환경변수/설정이 들어가는 곳이 3군데인데 성격이 전혀 달라서**, 어디에 뭘 넣어야 하는지부터 명확히 구분해둠(실제로 이거 헷갈려서 한 번 사고 날 뻔함 — Vercel 쪽에 새 변수 추가를 깜빡한 적 있음):
+
+| 위치 | 뭐가 들어가나 | PC 바뀔 때마다 새로 해야 하나? |
+|---|---|---|
+| 로컬 `.env` (git 추적 안 됨, `.gitignore`) | `VITE_` 접두어 변수 전부 (아래 4개) | **그렇다** — 새 PC마다 `.env.example` 복사해서 직접 채워야 함 |
+| **Vercel 프로젝트 환경변수** (Vercel 대시보드 → Settings → Environment Variables) | 로컬 `.env`와 **동일한 `VITE_` 변수 전부** | 한 번 설정되면 유지되지만, **`VITE_` 변수를 새로 추가할 때마다 여기도 같이 추가해야 함** — 안 하면 프로덕션 빌드에서 그 값이 `undefined`가 되는데 에러가 안 나고 그냥 기능이 조용히 안 보이기만 해서 놓치기 쉬움 |
+| Supabase Edge Function secrets (`npx supabase secrets set`) | `VAPID_PRIVATE_KEY`, `CRON_SECRET`, `GITHUB_TOKEN`, `MAINTENANCE_BOT_SECRET`, `MAINTENANCE_OWNER_USER_ID` 등 | **아니다** — 클라우드(같은 Supabase 프로젝트)에 저장돼서 어느 PC에서 작업하든 그대로 적용됨 |
+
+### 새 PC 세팅 순서
 
 1. Node.js, Git, VSCode + Claude Code 확장 설치
 2. `git clone https://github.com/chigi430/couple-diary.git` 후 `npm install`
 3. `.env.example`을 복사해서 `.env`로 만들고 실제 값 채우기:
    - `VITE_SUPABASE_URL`, `VITE_SUPABASE_KEY` — Supabase 대시보드 → Settings → API Keys
-   - `VITE_KAKAO_MAP_APP_KEY` — Kakao Developers → 내 애플리케이션 → 앱 키 → JavaScript 키
-   - `VITE_VAPID_PUBLIC_KEY` — 푸시 알림용 공개키. 기존에 생성해둔 값이 있으면 그걸 그대로 쓰면 되고(비밀키와 짝이 맞아야 하므로 새로 만들면 안 됨), 안 가지고 있으면 물어볼 것.
-   - `VITE_MAINTAINER_USER_ID` — 오류 제보 화면에서 배포 버튼 등 유지보수 상세정보를 볼 수 있는 계정(창환님 profiles.id). 비밀값 아님, `.env.example`에 실제 값이 이미 적혀 있으니 그대로 복사하면 됨. 단, **DB를 초기화해서 계정을 다시 만든 경우엔 이 값이 옛날 계정 id라 안 맞을 수 있음** — 그럴 땐 `select id from profiles where display_name=...` 등으로 새 id를 찾아서 `.env.example`과 Vercel 프로젝트 환경변수 양쪽 다 갱신하고 재배포해야 반영됨(Vite는 빌드 시점에 값을 박아 넣어서, Vercel 쪽 환경변수도 별도로 맞아야 함).
+   - `VITE_KAKAO_MAP_APP_KEY` — Kakao Developers → 내 애플리케이션 → 앱 키 → JavaScript 키 (Web 플랫폼 도메인에 `http://localhost:5173`과 실제 배포 도메인이 이미 둘 다 등록돼 있어서 새 PC에서 추가 설정 불필요, 포트만 5173으로 맞으면 됨)
+   - `VITE_VAPID_PUBLIC_KEY` — 기존에 생성해둔 값 그대로 사용(비밀키와 짝이 맞아야 하므로 새로 만들면 안 됨), 모르면 물어볼 것
+   - `VITE_MAINTAINER_USER_ID` — 오류 제보 화면에서 배포 버튼 등 유지보수 상세정보를 볼 수 있는 계정(창환님 profiles.id). 비밀값 아님, `.env.example`에 실제 값이 이미 적혀 있으니 그대로 복사. **DB를 초기화해서 계정을 다시 만든 경우엔 이 값이 옛날 계정 id라 안 맞을 수 있음** — 그럴 땐 새 id를 찾아서 `.env.example`과 Vercel 프로젝트 환경변수 양쪽 다 갱신하고 재배포해야 반영됨
 4. `npm run dev`로 실행
 
-Supabase/Vercel/Kakao 설정은 전부 클라우드에 이미 되어 있어서 추가 설정 없이 그대로 이어짐 (Kakao Web 플랫폼 도메인에 `http://localhost:5173`이 등록돼 있어 포트만 같으면 어느 PC에서든 지도 기능도 동작). Edge Function 배포/시크릿 설정도 클라우드 쪽이라 새 PC에서 다시 할 필요 없음 — 다만 Edge Function 코드를 새 PC에서 수정해서 재배포하려면 그 PC에서 `npx supabase login` → `npx supabase link --project-ref heksenfpxztwwstbqkll` 한 번은 해줘야 함.
+Edge Function 배포/시크릿 설정은 클라우드 쪽이라 새 PC에서 다시 할 필요 없음 — 다만 Edge Function 코드를 새 PC에서 수정해서 재배포하려면 그 PC에서 `npx supabase login` → `npx supabase link --project-ref heksenfpxztwwstbqkll` 한 번은 해줘야 함.
+
+### 세션 넘길 때 지킬 습관
+
+- 작업 끝내고 자리 옮기기 전엔 **커밋 + push까지 끝내고 갈 것** — 로컬에만 있는 커밋은 다른 PC/세션에서 안 보임.
+- 새 PC/새 세션 시작하면 **`git pull`(또는 `git fetch`+`git log HEAD..origin/main`로 확인)부터 하고 시작할 것** — 다른 PC에서 먼저 작업해뒀을 수 있음(실제로 이런 일이 있었음: 집 PC에서 만든 "오류 제보" 기능을 이 PC 세션이 하루 뒤에야 발견함).
+- 이 CLAUDE.md의 "핵심 기능"/"앞으로 할 일" 같은 섹션은 큰 작업이 끝나면 그때그때 최신 상태로 갱신해둘 것 — 다른 PC 세션이 이 파일만 보고도 맥락을 바로 잡을 수 있어야 함.
 
 Edge Function 쪽 비밀값(VAPID 비밀키, CRON_SECRET)은 `.env`가 아니라 `npx supabase secrets set`으로 클라우드에 저장돼 있어서 로컬에는 존재하지 않음 — 확인하려면 Supabase 대시보드 → Edge Functions → Secrets에서 볼 것(값 자체는 대시보드에서도 마스킹되어 안 보임, 재설정만 가능).
 
@@ -105,6 +119,7 @@ Edge Function 쪽 비밀값(VAPID 비밀키, CRON_SECRET)은 `.env`가 아니라
 - 코드를 수정하기 전에 무엇을 왜 바꾸는지 먼저 설명할 것.
 - 큰 변경은 한 번에 하지 말고 단계별로 진행할 것. 다만 매 단계 확인받으려고 멈추지 말고, **웬만한 요청/판단은 기본적으로 진행(yes)** — 되돌리기 어려운 작업, 보안/계정 관련(비밀번호·결제·계정 삭제 등), 방향이 크게 갈리는 선택처럼 "진짜 중요하다" 싶은 것만 먼저 확인받을 것. (이건 어느 PC/환경에서 작업하든 동일하게 적용 — 로컬 메모리가 아니라 이 문서에 박아둔 이유)
 - Supabase/Kakao 키 등 민감한 값은 절대 코드나 이 문서에 하드코딩하지 말고 환경변수(.env)로 관리할 것 (이 저장소는 Public이라 특히 주의).
+- 새 `VITE_` 접두어 환경변수를 추가하면 `.env.example`뿐 아니라 **Vercel 프로젝트 환경변수에도 반드시 같이 추가**할 것(위 "다른 PC에서 이어서 작업하기" 표 참고) — 안 하면 프로덕션에서 조용히 `undefined`가 되고 에러 없이 기능만 안 보여서 놓치기 쉬움.
 - 설명은 한국어로, 초보 친화적으로.
 - `npm run build`/`dev`/`preview`는 매번 승인받지 않고 바로 실행 (Bash 도구 사용 — PowerShell 도구는 권한 규칙이 안 먹힘).
 - `supabase-setup.sql` 변경(새 컬럼/함수/트리거 추가 등)도 승인받지 말고 바로 실행할 것 — `npx supabase db query --linked --file supabase-setup.sql` (또는 필요한 부분만 `--linked "<SQL>"`)으로 직접 적용. 이 파일은 여러 번 실행해도 안전하게 설계돼 있음. CLI가 로그인/링크 안 돼 있으면 그때만 로그인 진행 여부를 물을 것.
