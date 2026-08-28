@@ -106,23 +106,18 @@
 
 Edge Function 배포/시크릿 설정은 클라우드 쪽이라 새 PC에서 다시 할 필요 없음 — 다만 Edge Function 코드를 새 PC에서 수정해서 재배포하려면 그 PC에서 `npx supabase login` → `npx supabase link --project-ref heksenfpxztwwstbqkll` 한 번은 해줘야 함.
 
-**Vercel CLI**: 이 PC는 토큰 방식으로 연동해둠(`vercel-token.local` 파일, git 추적 안 됨) — `npx vercel env ls --token="$(cat vercel-token.local)"` 식으로 Vercel 프로젝트 환경변수를 직접 조회/추가할 수 있음. **`npx vercel login`(대화형 로그인)은 이 PC에서 안 됨** — Windows 컴퓨터 이름이 한글이라 Vercel CLI가 로그인 절차 중 HTTP 헤더 인코딩에서 에러남(`ByteString` 변환 실패). 새 PC에서 이어받을 땐 Vercel 대시보드 → Settings → Tokens에서 토큰을 새로 만들어 `vercel-token.local`에 저장하고 `--token` 플래그로 쓸 것(로그인 명령 자체를 피하면 이 버그를 안 탐). 근본 해결은 PC 이름을 영문으로 바꾸고 재부팅하는 것.
-
-### 세션 넘길 때 지킬 습관
-
-- 작업 끝내고 자리 옮기기 전엔 **커밋 + push까지 끝내고 갈 것** — 로컬에만 있는 커밋은 다른 PC/세션에서 안 보임.
-- 새 PC/새 세션 시작하면 **`git pull`(또는 `git fetch`+`git log HEAD..origin/main`로 확인)부터 하고 시작할 것** — 다른 PC에서 먼저 작업해뒀을 수 있음(실제로 이런 일이 있었음: 집 PC에서 만든 "오류 제보" 기능을 이 PC 세션이 하루 뒤에야 발견함).
-- 이 CLAUDE.md의 "핵심 기능"/"앞으로 할 일" 같은 섹션은 큰 작업이 끝나면 그때그때 최신 상태로 갱신해둘 것 — 다른 PC 세션이 이 파일만 보고도 맥락을 바로 잡을 수 있어야 함.
+**Vercel CLI**: 이 PC는 토큰 방식으로 연동해둠(`vercel-token.local` 파일, git 추적 안 됨). 토큰 인증 방법·Vercel 로그인 버그(한글 컴퓨터 이름 문제) 같은 일반 노하우는 `../../_shared/dev-environment.md`(공용 작업 환경 노트, 커플다이어리·kis-auto-trader 공통) 참고.
 
 Edge Function 쪽 비밀값(VAPID 비밀키, CRON_SECRET)은 `.env`가 아니라 `npx supabase secrets set`으로 클라우드에 저장돼 있어서 로컬에는 존재하지 않음 — 확인하려면 Supabase 대시보드 → Edge Functions → Secrets에서 볼 것(값 자체는 대시보드에서도 마스킹되어 안 보임, 재설정만 가능).
 
+**공용 작업 환경 노트**(`../../_shared/dev-environment.md`, OneDrive로 동기화되는 폴더): 이 프로젝트와 kis-auto-trader가 공통으로 쓰는 작업 스타일·Supabase/Vercel CLI 노하우·PC 간 세션 handoff 습관을 모아둔 문서. 세션 시작할 때 이 문서도 같이 참고할 것 — 프로젝트별 CLAUDE.md엔 이 프로젝트에만 해당하는 내용만 남겨두고 공통 내용은 저기서 관리함.
+
 ## 작업 시 지켜줄 것
 
-- 코드를 수정하기 전에 무엇을 왜 바꾸는지 먼저 설명할 것.
-- 큰 변경은 한 번에 하지 말고 단계별로 진행할 것. 다만 매 단계 확인받으려고 멈추지 말고, **웬만한 요청/판단은 기본적으로 진행(yes)** — 되돌리기 어려운 작업, 보안/계정 관련(비밀번호·결제·계정 삭제 등), 방향이 크게 갈리는 선택처럼 "진짜 중요하다" 싶은 것만 먼저 확인받을 것. (이건 어느 PC/환경에서 작업하든 동일하게 적용 — 로컬 메모리가 아니라 이 문서에 박아둔 이유)
-- Supabase/Kakao 키 등 민감한 값은 절대 코드나 이 문서에 하드코딩하지 말고 환경변수(.env)로 관리할 것 (이 저장소는 Public이라 특히 주의).
+일반적인 협업 스타일(기본 진행 원칙, 감사 후 전체 구현, 자기검토, 정량적 검증, 민감정보 관리 등)은 `../../_shared/dev-environment.md`(공용 작업 환경 노트) 참고 — 프로젝트 불문 공통 적용. 아래는 **이 프로젝트에서만 추가로 지킬 것**:
+
+- Supabase/Kakao 키 등은 특히 이 저장소가 **Public**이라 하드코딩에 더 주의할 것.
 - 새 `VITE_` 접두어 환경변수를 추가하면 `.env.example`뿐 아니라 **Vercel 프로젝트 환경변수에도 반드시 같이 추가**할 것(위 "다른 PC에서 이어서 작업하기" 표 참고) — 안 하면 프로덕션에서 조용히 `undefined`가 되고 에러 없이 기능만 안 보여서 놓치기 쉬움.
-- 설명은 한국어로, 초보 친화적으로.
 - `npm run build`/`dev`/`preview`는 매번 승인받지 않고 바로 실행 (Bash 도구 사용 — PowerShell 도구는 권한 규칙이 안 먹힘).
 - `supabase-setup.sql` 변경(새 컬럼/함수/트리거 추가 등)도 승인받지 말고 바로 실행할 것 — `npx supabase db query --linked --file supabase-setup.sql` (또는 필요한 부분만 `--linked "<SQL>"`)으로 직접 적용. 이 파일은 여러 번 실행해도 안전하게 설계돼 있음. CLI가 로그인/링크 안 돼 있으면 그때만 로그인 진행 여부를 물을 것.
 - 사용자 눈에 보이는 변경사항을 배포(git push)할 때는 `public/changelog.json`에도 새 항목을 추가할 것 — `version`은 그 배포 커밋의 짧은 해시(`git rev-parse --short HEAD`, 7자), `notes`는 초보 사용자 눈높이의 한국어 한 줄 설명 배열(깃 커밋 메시지 그대로 쓰지 말 것). 배열 맨 앞(최신)에 추가. 설정 화면의 "버전 정보/업데이트" 기능이 이 파일로 "무엇이 바뀌었는지"를 보여줌.
