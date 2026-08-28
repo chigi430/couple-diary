@@ -106,6 +106,8 @@
 
 Edge Function 배포/시크릿 설정은 클라우드 쪽이라 새 PC에서 다시 할 필요 없음 — 다만 Edge Function 코드를 새 PC에서 수정해서 재배포하려면 그 PC에서 `npx supabase login` → `npx supabase link --project-ref heksenfpxztwwstbqkll` 한 번은 해줘야 함.
 
+**Vercel CLI**: 이 PC는 토큰 방식으로 연동해둠(`vercel-token.local` 파일, git 추적 안 됨) — `npx vercel env ls --token="$(cat vercel-token.local)"` 식으로 Vercel 프로젝트 환경변수를 직접 조회/추가할 수 있음. **`npx vercel login`(대화형 로그인)은 이 PC에서 안 됨** — Windows 컴퓨터 이름이 한글이라 Vercel CLI가 로그인 절차 중 HTTP 헤더 인코딩에서 에러남(`ByteString` 변환 실패). 새 PC에서 이어받을 땐 Vercel 대시보드 → Settings → Tokens에서 토큰을 새로 만들어 `vercel-token.local`에 저장하고 `--token` 플래그로 쓸 것(로그인 명령 자체를 피하면 이 버그를 안 탐). 근본 해결은 PC 이름을 영문으로 바꾸고 재부팅하는 것.
+
 ### 세션 넘길 때 지킬 습관
 
 - 작업 끝내고 자리 옮기기 전엔 **커밋 + push까지 끝내고 갈 것** — 로컬에만 있는 커밋은 다른 PC/세션에서 안 보임.
