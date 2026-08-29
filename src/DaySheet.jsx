@@ -49,7 +49,7 @@ export default function DaySheet({
         <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
           <div style={S.sheetHandle} />
         </div>
-        <div style={S.sheetHead}>
+        <div style={{ ...S.sheetHead, ...handleStyle }} {...handleProps}>
           <div style={S.sheetDate}>
             {prettyDate(date)}
             {HOLIDAYS[date] && <span style={S.holidayTag}>{HOLIDAYS[date]}</span>}

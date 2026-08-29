@@ -157,7 +157,7 @@ export default function Recap({ byDate, people, onClose }) {
         <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
           <div style={S.sheetHandle} />
         </div>
-        <div style={S.recapHead}>
+        <div style={{ ...S.recapHead, ...handleStyle }} {...handleProps}>
           <div style={S.recapYearNav}>
             <button style={S.recapYearBtn} onClick={prevYear} disabled={yi <= 0}>‹</button>
             <span style={S.recapYearLabel}>{year}년 리캡</span>

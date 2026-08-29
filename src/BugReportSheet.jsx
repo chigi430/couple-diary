@@ -86,7 +86,7 @@ export default function BugReportSheet({ userId, reports, addReport, deployRepor
         <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
           <div style={S.sheetHandle} />
         </div>
-        <div style={S.sheetHead}>
+        <div style={{ ...S.sheetHead, ...handleStyle }} {...handleProps}>
           <div style={S.sheetDate}>오류 제보</div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <MoreMenu items={[{ label: "제출", onClick: submit }]} />

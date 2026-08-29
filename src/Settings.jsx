@@ -407,7 +407,7 @@ export default function Settings({ profile, partner, coupleId, onSaved, onSignOu
             <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
               <div style={S.sheetHandle} />
             </div>
-            <div style={S.sheetHead}>
+            <div style={{ ...S.sheetHead, ...handleStyle }} {...handleProps}>
               <div style={S.sheetDate}>프로필 수정</div>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <MoreMenu items={[{ label: "저장", onClick: save }]} />

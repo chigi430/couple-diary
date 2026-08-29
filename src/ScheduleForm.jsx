@@ -61,7 +61,7 @@ export default function ScheduleForm({ date, existing, meInfo, onSave, onDelete,
         <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
           <div style={S.sheetHandle} />
         </div>
-        <div style={S.sheetHead}>
+        <div style={{ ...S.sheetHead, ...handleStyle }} {...handleProps}>
           <div style={S.sheetDate}>{existing ? "일정 수정" : "일정 등록"}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <MoreMenu

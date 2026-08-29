@@ -16,7 +16,7 @@ export default function ConfirmSheet({ title, children, confirmLabel = "확인",
         <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
           <div style={S.sheetHandle} />
         </div>
-        <div style={S.sheetHead}>
+        <div style={{ ...S.sheetHead, ...handleStyle }} {...handleProps}>
           <div style={S.sheetDate}>{title}</div>
           <button style={S.closeBtn} onClick={onClose}><IconX size={14} /></button>
         </div>

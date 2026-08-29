@@ -47,6 +47,8 @@ export function useSheetDrag(onClose) {
   };
 
   const onPointerDown = useCallback((ev) => {
+    // 헤더에서도 끌어내릴 수 있게 하되, 버튼/입력창에서 시작한 제스처는 드래그로 보지 않음
+    if (ev.target.closest && ev.target.closest('button, a, input, textarea, select, [contenteditable="true"]')) return;
     dragging.current = true;
     startY.current = ev.clientY;
     curY.current = 0;

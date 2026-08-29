@@ -193,8 +193,8 @@ export const S = {
   sheet: { width: "100%", maxWidth: 460, background: "var(--sheet)", borderRadius: "22px 22px 0 0", padding: "8px 17px 22px", minHeight: "90vh", maxHeight: "90vh", overflowY: "auto", overscrollBehavior: "contain", animation: "sheetUp .22s cubic-bezier(.2,.8,.2,1)" },
   // 내용이 짧은 시트(확인창 등)는 90vh를 다 채우지 않고 내용만큼만 차지하도록
   sheetCompact: { width: "100%", maxWidth: 460, background: "var(--sheet)", borderRadius: "22px 22px 0 0", padding: "8px 17px 22px", maxHeight: "90vh", overflowY: "auto", overscrollBehavior: "contain", animation: "sheetUp .22s cubic-bezier(.2,.8,.2,1)" },
-  sheetHandleZone: { display: "flex", justifyContent: "center", padding: "12px 0 10px", marginTop: -8 },
-  sheetHandle: { width: 36, height: 4, borderRadius: 4, background: "var(--border)" },
+  sheetHandleZone: { display: "flex", alignItems: "center", justifyContent: "center", padding: "16px 0 18px", marginTop: -8, touchAction: "none" },
+  sheetHandle: { width: 46, height: 5, borderRadius: 5, background: "var(--border)" },
   sheetHead: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 7 },
   sheetDate: { fontSize: 16.5, fontWeight: 800, color: "var(--text-h1)", letterSpacing: "-0.02em", display: "flex", alignItems: "center", flexWrap: "wrap", gap: 7 },
   holidayTag: { fontSize: 10.5, fontWeight: 700, color: "#fff", background: "#E08A7A", padding: "2px 7px", borderRadius: 7 },

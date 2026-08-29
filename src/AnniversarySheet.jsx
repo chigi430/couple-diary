@@ -35,7 +35,7 @@ export default function AnniversarySheet({ initial, onSave, onClose }) {
         <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
           <div style={S.sheetHandle} />
         </div>
-        <div style={S.sheetHead}>
+        <div style={{ ...S.sheetHead, ...handleStyle }} {...handleProps}>
           <div style={S.sheetDate}>사귀기 시작한 날</div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <MoreMenu items={items} />
