@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { supabase } from "./supabaseClient";
 import { S, css } from "./styles";
+import logoMark from "./assets/logo-icon.svg";
 
 export default function CoupleGate({ onDone, onSignOut }) {
   const [anniversary, setAnniversary] = useState("");
@@ -59,7 +60,7 @@ export default function CoupleGate({ onDone, onSignOut }) {
     <div style={{ ...S.root, paddingTop: 40 }}>
       <style>{css}</style>
       <div style={{ textAlign: "center", marginBottom: 24 }}>
-        <div style={S.authMark}>◍</div>
+        <img src={logoMark} alt="" style={S.authMark} />
         <div style={S.authTitle}>우리 공간 만들기</div>
         <div style={S.authSub}>둘을 하나로 묶을 커플 공간이 필요해요.</div>
       </div>

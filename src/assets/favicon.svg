@@ -1,0 +1,31 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="dawn" x1="0.2" y1="0.05" x2="0.8" y2="0.95">
+      <stop offset="0" stop-color="#FFB58C"/>
+      <stop offset="0.42" stop-color="#FF7E90"/>
+      <stop offset="0.78" stop-color="#E85C82"/>
+      <stop offset="1" stop-color="#B03C67"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.55">
+      <stop offset="0" stop-color="#FFF0D2" stop-opacity="0.95"/>
+      <stop offset="0.55" stop-color="#FFDCA6" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#FFDCA6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="gloss" cx="0.35" cy="0.32" r="0.4">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="tile" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#FF9E7D"/>
+      <stop offset="0.5" stop-color="#F5678A"/>
+      <stop offset="1" stop-color="#C13E6B"/>
+    </linearGradient>
+    <path id="heart" d="M256,150 C230,96 176,80 138,80 C86,80 46,120 46,176 C46,270 150,338 256,432 C362,338 466,270 466,176 C466,120 426,80 374,80 C336,80 282,96 256,150 Z"/>
+    <clipPath id="heartClip"><use href="#heart"/></clipPath>
+  </defs>
+  <rect x="0" y="0" width="512" height="512" rx="120" fill="url(#tile)"/>
+  <g transform="translate(0,4) scale(0.9) translate(28,28)">
+    <use href="#heart" fill="#FFFFFF"/>
+    <g clip-path="url(#heartClip)"><ellipse cx="256" cy="230" rx="130" ry="175" fill="#FFE7D8" opacity="0.5"/></g>
+  </g>
+</svg>

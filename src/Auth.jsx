@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { supabase } from "./supabaseClient";
 import { S, css } from "./styles";
 import { EMOJI_CHOICES, COLOR_CHOICES } from "./constants";
+import logoMark from "./assets/logo-icon.svg";
 
 export default function Auth() {
   const [mode, setMode] = useState("signin"); // signin | signup
@@ -57,7 +58,7 @@ export default function Auth() {
     <div style={S.authWrap}>
       <style>{css}</style>
       <div style={S.authBrand}>
-        <div style={S.authMark}>◍</div>
+        <img src={logoMark} alt="" style={S.authMark} />
         <div style={S.authTitle}>오늘의 우리</div>
         <div style={S.authSub}>함께 쌓아가는 날들</div>
       </div>

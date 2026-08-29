@@ -98,7 +98,7 @@ export const S = {
 
   header: { padding: "18px 3px 10px" },
   brandRow: { display: "flex", alignItems: "center", gap: 10 },
-  brandMark: { fontSize: 22, color: "#D98763", lineHeight: 1, filter: "drop-shadow(0 2px 4px rgba(217,135,99,0.35))" },
+  brandMark: { width: 26, height: 26, display: "block", filter: "drop-shadow(0 2px 5px rgba(176,60,103,0.28))" },
   brandName: { fontSize: 18, fontWeight: 800, letterSpacing: "-0.02em", color: "var(--text-h1)" },
   brandSub: { fontSize: 11.5, color: "var(--text-muted)", marginTop: 1 },
   userChip: { display: "flex", alignItems: "center", gap: 5, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 18, padding: "4px 9px 4px 4px", boxShadow: "0 2px 6px rgba(122,74,60,0.06)" },
@@ -253,7 +253,7 @@ export const S = {
   // 인증/게이트 화면
   authWrap: { minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", maxWidth: 380, margin: "0 auto", padding: "0 22px" },
   authBrand: { textAlign: "center", marginBottom: 24 },
-  authMark: { fontSize: 34, color: "#D98763" },
+  authMark: { width: 64, height: 64, display: "block", margin: "0 auto", filter: "drop-shadow(0 8px 20px rgba(176,60,103,0.28))" },
   authTitle: { fontSize: 21, fontWeight: 800, color: "var(--text-h1)", marginTop: 6 },
   authSub: { fontSize: 12.5, color: "var(--text-muted)", marginTop: 5 },
   authField: { marginBottom: 10, overflow: "hidden" },

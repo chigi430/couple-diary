@@ -19,6 +19,7 @@ import AnniversarySheet from "./AnniversarySheet";
 import Avatar from "./Avatar";
 import ToastHost from "./ToastHost";
 import { IconToday, IconCalendar, IconList, IconStar, IconSettings } from "./Icons";
+import logoMark from "./assets/logo-icon.svg";
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -171,7 +172,7 @@ export default function App() {
 
       <header style={S.header}>
         <div style={S.brandRow}>
-          <span style={S.brandMark}>◍</span>
+          <img src={logoMark} alt="" style={S.brandMark} />
           <div style={{ flex: 1 }}>
             <div style={S.brandName}>오늘의 우리</div>
             <div style={S.brandSub}>함께 쌓아가는 날들</div>

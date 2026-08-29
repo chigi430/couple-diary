@@ -57,7 +57,7 @@
 ## 앞으로 할 일 (TODO)
 
 - 공휴일 데이터(`src/constants.js`, 현재 2026년 예시)를 공공데이터포털 API로 자동화할지 검토
-- PWA 아이콘(`public/pwa-192x192.png`, `pwa-512x512.png`, `apple-touch-icon.png`)이 아직 임시 도형이라 실제 로고로 교체 필요
+- (완료) 로고/아이콘 교체 — 새벽빛 그러데이션 하트 마크. `public/`에 `favicon.svg`·`favicon-16/32.png`·`apple-touch-icon.png`(180)·`icon-192/512.png`, `src/assets/`에 SVG 원본(`logo-icon`·`logo-horizontal`·`logo-stacked`·`app-icon`·`favicon`·`logo-mono`). 헤더/로그인/커플연결 화면 브랜드 마크는 `logo-icon.svg` 사용. 앱 포인트 컬러(`#D98763` 오렌지)는 로고 팔레트(코럴~베리)와 별개로 아직 그대로 — 통일할지는 미정
 - (아이디어만 논의, 미착수) 그룹/단체용으로 확장 — 한 사람이 여러 그룹에 속하는 구조로 바꿔야 함
 
 ## 푸시 알림 구조

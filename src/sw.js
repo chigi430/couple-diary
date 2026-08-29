@@ -33,8 +33,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title || "오늘의 우리", {
       body: data.body || "",
-      icon: "/pwa-192x192.png",
-      badge: "/pwa-192x192.png",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
       data: { url: data.url || "/" },
     })
   );
