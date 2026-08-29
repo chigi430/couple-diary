@@ -42,16 +42,23 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
     const next = { ...notesObj };
     if (text.trim() === "") delete next[me];
     else next[me] = text;
+    // 알림 표시는 저장(네트워크) 완료를 기다리지 않고 지금 찍는다.
+    // "완료"/닫기가 저장보다 먼저 처리돼서 알림이 통째로 누락되던 문제 방지.
+    if (text.trim() !== "") dirtyRef.current.note = true;
     set({ notes: next, note: combineNotes(next), note_by: me });
   };
 
   // 자동저장은 칸마다 일어나지만, 상대에게 알림은 "편집을 끝냈을 때"(완료 버튼/시트 닫기) 한 번만 보낸다.
-  const dirtyRef = useRef({ note: false, photo: false });
+  const dirtyRef = useRef({ note: false });
+  // 이번 편집에서 사진이 순증가했을 때만 알림 — 올렸다가 도로 지우면(추가 -1) 알림 안 감
+  const photoDeltaRef = useRef(0);
   const flushActivity = useCallback(() => {
-    const d = dirtyRef.current;
-    if (!d.note && !d.photo) return;
-    dirtyRef.current = { note: false, photo: false };
-    supabase.rpc("notify_partner_activity", { p_kind: d.note ? "diary" : "photo" });
+    const noteChanged = dirtyRef.current.note;
+    const photoAdded = photoDeltaRef.current > 0;
+    if (!noteChanged && !photoAdded) return;
+    dirtyRef.current = { note: false };
+    photoDeltaRef.current = 0;
+    supabase.rpc("notify_partner_activity", { p_kind: noteChanged ? "diary" : "photo" });
   }, []);
 
   const prevModeRef = useRef(mode);
@@ -65,11 +72,8 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
     const { error } = await saveEntry(date, patch);
     if (error) {
       console.error("저장 실패:", error);
+      if ("note" in patch) dirtyRef.current.note = false; // 저장 실패 시 알림 표시 되돌림
       window.alert("저장하지 못했어요. 잠시 후 다시 시도해주세요.");
-      return;
-    }
-    if ("note" in patch && (patch.note || "").trim() !== "" && (patch.note || "") !== (e.note || "")) {
-      dirtyRef.current.note = true;
     }
   };
 
@@ -81,6 +85,7 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
   const onDeletePhoto = async (p) => {
     try {
       await deletePhoto(p);
+      photoDeltaRef.current -= 1; // 방금 올린 걸 지운 거면 순증가분이 0으로 상쇄돼 알림이 안 나감
     } catch (e) {
       console.error("사진 삭제 실패:", e);
       window.alert("사진을 삭제하지 못했어요. 잠시 후 다시 시도해주세요.");
@@ -91,11 +96,13 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
     const files = ev.target.files;
     if (!files || !files.length) return;
     setUploading(true);
+    const n = files.length;
+    photoDeltaRef.current += n; // 업로드 완료를 기다리지 않고 지금 반영 (닫기와의 경쟁 방지)
     try {
       await uploadPhotos(date, files);
-      dirtyRef.current.photo = true;
     } catch (e) {
       console.error("사진 업로드 실패:", e);
+      photoDeltaRef.current -= n; // 실패하면 되돌림
       window.alert("사진을 올리지 못했어요. 잠시 후 다시 시도해주세요.");
     } finally {
       setUploading(false);
