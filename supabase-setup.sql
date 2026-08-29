@@ -395,6 +395,21 @@ create policy "own push subscriptions" on push_subscriptions
 -- ────────────────────────────────────────────────
 create extension if not exists pg_net with schema extensions;
 
+-- 알림 도배 방지용 스로틀 로그: 받는 사람 × 카테고리별로 마지막 발송 시각을 기억한다.
+-- 'activity'(일기/사진/일정)처럼 짧은 시간에 여러 번 트리거되는 카테고리를 한 번으로 묶는 데 씀
+-- (예: 사진 5장 올리면 photos insert 트리거가 5번 → 알림 1번만).
+create table if not exists public.notify_throttle (
+  user_id      uuid not null,
+  category     text not null,
+  last_sent_at timestamptz not null default now(),
+  primary key (user_id, category)
+);
+-- RLS 켜고 정책은 두지 않음 → 클라이언트 직접 접근 차단, security definer 함수만 읽고 씀
+alter table public.notify_throttle enable row level security;
+
+-- 예전 5-인자 버전(카테고리 없음)이 남아있으면 6-인자 호출이 모호해지므로 제거
+drop function if exists public.notify_partner(uuid, uuid, text, text, text);
+
 create or replace function public.notify_partner(p_couple_id uuid, p_actor uuid, p_title text, p_body text, p_url text, p_category text default 'activity')
 returns void
 language plpgsql
@@ -406,6 +421,7 @@ declare
   base_url   text;
   secret     text;
   pref       boolean;
+  last_at    timestamptz;
 begin
   select id into partner_id from public.profiles
    where couple_id = p_couple_id and id <> p_actor;
@@ -425,6 +441,19 @@ begin
     pref := true; -- 'always' 카테고리(커플연결, 연말리캡)는 토글 없이 항상 발송
   end if;
   if pref is false then return; end if;
+
+  -- 'activity'는 편집 한 번(일기 저장 + 사진 여러 장)이 트리거를 여러 번 일으키므로
+  -- 같은 사람에게 최근 10분 안에 이미 보냈으면 이번 건은 건너뛴다.
+  if p_category = 'activity' then
+    select last_sent_at into last_at from public.notify_throttle
+     where user_id = partner_id and category = p_category;
+    if last_at is not null and now() - last_at < interval '10 minutes' then
+      return;
+    end if;
+    insert into public.notify_throttle (user_id, category, last_sent_at)
+    values (partner_id, p_category, now())
+    on conflict (user_id, category) do update set last_sent_at = now();
+  end if;
 
   select decrypted_secret into base_url from vault.decrypted_secrets where name = 'edge_function_base_url';
   select decrypted_secret into secret   from vault.decrypted_secrets where name = 'edge_function_secret';

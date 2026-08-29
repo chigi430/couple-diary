@@ -64,6 +64,7 @@
 - **프론트**: `src/sw.js`(커스텀 서비스워커, push/notificationclick 처리) + `src/push.js`(구독 생성/해제) + `Settings.jsx`의 알림 토글(구독 on-off + 카테고리별 on-off). `vite-plugin-pwa`는 `injectManifest` 전략 사용 중(커스텀 SW를 넣으려면 이 방식이 필요).
 - **구독 저장**: `push_subscriptions` 테이블 (기기당 1행).
 - **카테고리별 on-off**: `profiles.notify_activity` / `notify_reminder` / `notify_anniversary` / `notify_wishlist` / `notify_poke` 컬럼(기본 true). 커플연결·연말리캡 알림은 토글이 없고 항상 발송(SQL의 `notify_partner()` 함수에서 `p_category = 'always'`로 호출).
+- **도배 방지 스로틀**: `notify_partner()`가 `p_category = 'activity'`(일기 저장·사진 업로드·일정 추가)일 때는 `notify_throttle`(받는 사람×카테고리별 마지막 발송 시각) 테이블을 보고 **최근 10분 안에 같은 사람에게 이미 보냈으면 건너뜀**. 사진 5장 올리면 photos insert 트리거가 5번 도는데 알림은 1번만 가도록. 편집 세션(일기+사진+일정)을 한 건으로 묶는 효과. reminder/anniversary/wishlist/poke는 원래 자연히 빈도 제한이 있어 스로틀 안 함.
 - **발송**: Supabase Edge Function `supabase/functions/send-push` (VAPID 웹푸시, 즉시성 알림용), `supabase/functions/daily-check`(매일 저녁 9시 기념일/리마인더/연말리캡/**상대 생일 축하** 판단 — 카테고리 컬럼 보고 대상자 필터링. 생일은 `profiles.birthday`의 MM-DD가 오늘과 같으면 당사자 말고 상대에게 발송, `notify_anniversary` 토글 재사용).
 - **트리거**: `supabase-setup.sql` 16번 섹션 — 일기/사진/일정/위시리스트 완료, `join_couple()` 성공 시 `pg_net`으로 `send-push` 호출(각각 카테고리 파라미터 전달). 17번 섹션 — `pg_cron`이 매일 21시(KST)에 `daily-check` 호출. 23번 섹션 — `poke_partner()` RPC("생각나서 콕", 앱에서 직접 호출, 3분 쿨다운, `notify_partner`를 `p_category='poke'`로 호출 → 상대의 `notify_poke` 토글 확인 후 즉시 푸시).
 - **비밀값**: VAPID 비밀키·CRON_SECRET은 Supabase Edge Function secrets로, `send-push` 호출 URL/시크릿은 Supabase Vault(`vault.decrypted_secrets`)로 관리. 전부 git에는 안 올라감.
