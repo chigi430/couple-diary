@@ -309,6 +309,7 @@ export default function App() {
         <ProfileView
           person={profileViewPerson}
           isMe={profileViewPerson.id === userId}
+          me={profile}
           onEditProfile={() => {
             setProfileViewId(null);
             setTab("settings");

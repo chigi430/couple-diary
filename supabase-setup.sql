@@ -668,9 +668,12 @@ alter table profiles add column if not exists last_poke_at   timestamptz;
 alter table profiles add column if not exists notify_poke    boolean not null default true;
 
 -- "생각나서 콕" — 상대에게 즉시 푸시. 도배 방지로 3분 쿨다운.
--- 반환값: 'ok' | 'cooldown' | 'no_partner'
+-- 반환값(jsonb): {status:'ok', retry_after:180}
+--             | {status:'cooldown', retry_after:<남은 초>}
+--             | {status:'no_partner'}
+drop function if exists public.poke_partner();
 create or replace function public.poke_partner()
-returns text
+returns jsonb
 language plpgsql
 security definer
 set search_path = public
@@ -679,17 +682,21 @@ declare
   my_couple uuid;
   my_name   text;
   last_at   timestamptz;
+  cooldown  constant interval := interval '3 minutes';
 begin
   select couple_id, display_name, last_poke_at
     into my_couple, my_name, last_at
   from public.profiles where id = auth.uid();
 
   if my_couple is null then
-    return 'no_partner';
+    return jsonb_build_object('status', 'no_partner');
   end if;
 
-  if last_at is not null and now() - last_at < interval '3 minutes' then
-    return 'cooldown';
+  if last_at is not null and now() - last_at < cooldown then
+    return jsonb_build_object(
+      'status', 'cooldown',
+      'retry_after', ceil(extract(epoch from (last_at + cooldown - now())))::int
+    );
   end if;
 
   update public.profiles set last_poke_at = now() where id = auth.uid();
@@ -700,7 +707,7 @@ begin
     '지금 ' || coalesce(my_name, '상대방') || '님이 당신을 떠올리고 있어요',
     '/', 'poke');
 
-  return 'ok';
+  return jsonb_build_object('status', 'ok', 'retry_after', extract(epoch from cooldown)::int);
 end;
 $$;
 

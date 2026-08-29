@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "./supabaseClient";
 import { compressImage, uuid } from "./utils";
@@ -9,9 +9,12 @@ import { IconX, IconCalendar, IconList } from "./Icons";
 
 // 카카오톡 프로필처럼 전체화면으로 상대(또는 내) 프로필을 보여주는 오버레이.
 // 전체화면 fixed 오버레이라 CLAUDE.md 규칙대로 반드시 Portal 로 렌더한다.
+const POKE_COOLDOWN_MS = 3 * 60 * 1000;
+
 export default function ProfileView({
   person,
   isMe,
+  me,
   onEditProfile,
   onGoTimeline,
   onOpenAnniversary,
@@ -23,6 +26,24 @@ export default function ProfileView({
   const [uploading, setUploading] = useState(false);
   const [poking, setPoking] = useState(false);
   const [zoom, setZoom] = useState(false);
+  // 내가 마지막으로 콕 보낸 시각 기준으로 쿨다운이 언제 끝나는지 (ms epoch)
+  const [cooldownUntil, setCooldownUntil] = useState(() => {
+    const t = me?.last_poke_at ? new Date(me.last_poke_at).getTime() + POKE_COOLDOWN_MS : 0;
+    return t > Date.now() ? t : 0;
+  });
+  const [nowTick, setNowTick] = useState(Date.now());
+
+  useEffect(() => {
+    if (!cooldownUntil || cooldownUntil <= Date.now()) return;
+    const id = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [cooldownUntil]);
+
+  const cooldownLeft = Math.max(0, Math.ceil((cooldownUntil - nowTick) / 1000));
+  const cooldownText =
+    cooldownLeft > 0
+      ? `${Math.floor(cooldownLeft / 60)}:${String(cooldownLeft % 60).padStart(2, "0")}`
+      : "";
 
   const name = person?.display_name || (isMe ? "나" : "상대");
   const color = person?.color || "#D98763";
@@ -68,19 +89,30 @@ export default function ProfileView({
   };
 
   const poke = async () => {
-    if (poking) return;
+    if (poking || cooldownLeft > 0) return;
     setPoking(true);
     try {
       const { data, error } = await supabase.rpc("poke_partner");
       if (error) throw error;
-      if (data === "ok") toast(`${name}님에게 콕 알림을 보냈어요 💗`);
-      else if (data === "cooldown") toast("조금 전에 보냈어요. 3분 뒤에 다시 보낼 수 있어요.");
-      else toast("아직 연결된 상대가 없어요.");
+      const status = data?.status;
+      const retryMs = (data?.retry_after || 180) * 1000;
+      if (status === "ok") {
+        setCooldownUntil(Date.now() + retryMs);
+        setNowTick(Date.now());
+        onRefresh && onRefresh();
+        toast(`${name}님에게 콕 알림을 보냈어요 💗`);
+      } else if (status === "cooldown") {
+        setCooldownUntil(Date.now() + retryMs);
+        setNowTick(Date.now());
+        toast("조금 전에 보냈어요. 잠시 후 다시 보낼 수 있어요.");
+      } else {
+        toast("아직 연결된 상대가 없어요.");
+      }
     } catch (e) {
       console.error("콕 찌르기 실패:", e);
       toast("잠시 후 다시 시도해주세요.");
     } finally {
-      setTimeout(() => setPoking(false), 1500);
+      setTimeout(() => setPoking(false), 800);
     }
   };
 
@@ -137,9 +169,13 @@ export default function ProfileView({
               <IconCalendar size={20} />
               <span>기념일</span>
             </button>
-            <button style={{ ...st.actionBtn, opacity: poking ? 0.5 : 1 }} onClick={poke} disabled={poking}>
+            <button
+              style={{ ...st.actionBtn, opacity: poking || cooldownLeft > 0 ? 0.5 : 1 }}
+              onClick={poke}
+              disabled={poking || cooldownLeft > 0}
+            >
               <span style={st.actionIcon}>💗</span>
-              <span>생각나서 콕</span>
+              <span>{cooldownLeft > 0 ? `${cooldownText} 후` : "생각나서 콕"}</span>
             </button>
           </>
         )}
