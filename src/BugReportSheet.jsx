@@ -70,7 +70,9 @@ export default function BugReportSheet({ userId, reports, addReport, deployRepor
     setDeployBusyId(null);
     if (error) {
       console.error("배포 실패:", error);
-      toast("배포하지 못했어요. 잠시 후 다시 시도해주세요.");
+      // 서버(maintenance-bot)가 돌려준 실제 원인을 그대로 보여준다 — 창환님만 보는 버튼이라
+      // GitHub 토큰 만료·권한 부족 같은 걸 바로 알 수 있어야 함.
+      toast(typeof error === "string" ? `배포 실패: ${error}` : "배포하지 못했어요. 잠시 후 다시 시도해주세요.");
       return;
     }
     toast("배포됐어요 ✓");
