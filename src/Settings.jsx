@@ -45,6 +45,7 @@ export default function Settings({ profile, partner, coupleId, onSaved, onSignOu
     notify_reminder: profile?.notify_reminder !== false,
     notify_anniversary: profile?.notify_anniversary !== false,
     notify_wishlist: profile?.notify_wishlist !== false,
+    notify_poke: profile?.notify_poke !== false,
   });
 
   useEffect(() => {
@@ -347,6 +348,15 @@ export default function Settings({ profile, partner, coupleId, onSaved, onSignOu
                     onClick={() => togglePref("notify_wishlist")}
                   >
                     <span style={{ ...S.toggleKnob, left: prefs.notify_wishlist ? 21 : 3 }} />
+                  </button>
+                </div>
+                <div style={S.toggleRow}>
+                  <span style={S.toggleLabel}>생각나서 콕 알림</span>
+                  <button
+                    style={{ ...S.toggleSwitch, background: prefs.notify_poke ? "#D98763" : "var(--border)" }}
+                    onClick={() => togglePref("notify_poke")}
+                  >
+                    <span style={{ ...S.toggleKnob, left: prefs.notify_poke ? 21 : 3 }} />
                   </button>
                 </div>
               </div>

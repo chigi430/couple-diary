@@ -419,6 +419,8 @@ begin
     select notify_anniversary into pref from public.profiles where id = partner_id;
   elsif p_category = 'wishlist' then
     select notify_wishlist into pref from public.profiles where id = partner_id;
+  elsif p_category = 'poke' then
+    select notify_poke into pref from public.profiles where id = partner_id;
   else
     pref := true; -- 'always' 카테고리(커플연결, 연말리캡)는 토글 없이 항상 발송
   end if;
@@ -663,6 +665,7 @@ alter table profiles add column if not exists cover_url      text;
 alter table profiles add column if not exists status_message text;
 alter table profiles add column if not exists birthday       date;
 alter table profiles add column if not exists last_poke_at   timestamptz;
+alter table profiles add column if not exists notify_poke    boolean not null default true;
 
 -- "생각나서 콕" — 상대에게 즉시 푸시. 도배 방지로 15분 쿨다운.
 -- 반환값: 'ok' | 'cooldown' | 'no_partner'
@@ -695,7 +698,7 @@ begin
     my_couple, auth.uid(),
     coalesce(my_name, '상대방') || '님이 생각나서 콕 찔렀어요 💗',
     '지금 ' || coalesce(my_name, '상대방') || '님이 당신을 떠올리고 있어요',
-    '/', 'activity');
+    '/', 'poke');
 
   return 'ok';
 end;
