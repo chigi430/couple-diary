@@ -14,7 +14,7 @@
 
 - **빌드/프론트엔드**: Vite + React
 - **백엔드/데이터**: Supabase (인증, DB, 스토리지, 실시간 기능)
-- **지도**: 카카오맵 JS SDK (다녀온 장소 핀 기록/모아보기)
+- **지도**: 카카오맵 JS SDK (다녀온 장소 핀 기록/모아보기). `PlacePicker.jsx`는 지도 탭으로 찍기 + 키워드 검색(`kakao.maps.services.Places`) 둘 다 지원 — 검색 결과를 고르면 그 장소명이 `place`로 저장됨. 사진 업로더 표시는 `PhotoCarousel.jsx`/`DiaryTab.jsx`에서 이모지 대신 실제 프로필 아바타(`Avatar`)를 사진 우하단에 겹쳐 보여줌
 - **개발 환경**: Windows
 - **배포**: GitHub(Public, `chigi430/couple-diary`) → Vercel 자동 배포 (main 브랜치 push 시)
 - **배포 주소**: https://couple-diary-cyan.vercel.app

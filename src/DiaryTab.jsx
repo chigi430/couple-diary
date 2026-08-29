@@ -191,7 +191,11 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
         {photos.map((p) => (
           <div key={p.id} style={S.photoItem}>
             <SignedImage path={p.storage_path} style={S.photoImg} />
-            <span style={{ ...S.photoBy, background: who(p.uploaded_by).color }}>{who(p.uploaded_by).emoji}</span>
+            {p.uploaded_by && (
+              <div style={S.photoByAvSm}>
+                <Avatar person={who(p.uploaded_by)} size={16} style={{ border: "1.5px solid #fff" }} />
+              </div>
+            )}
             <button style={S.photoDel} onClick={() => onDeletePhoto(p)}><IconX size={11} /></button>
           </div>
         ))}

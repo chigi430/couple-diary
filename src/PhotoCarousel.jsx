@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { S } from "./styles";
 import SignedImage from "./SignedImage";
 import PhotoLightbox from "./PhotoLightbox";
+import Avatar from "./Avatar";
 
 const MIN_RATIO = 0.8; // 4:5 세로 한계
 const MAX_RATIO = 1.91; // 파노라마 가로 한계
@@ -45,8 +46,10 @@ export default function PhotoCarousel({ photos, who }) {
                   onClick={() => setLightboxIndex(i)}
                 />
               )}
-              {who && (
-                <span style={{ ...S.photoBy, background: who(p.uploaded_by).color }}>{who(p.uploaded_by).emoji}</span>
+              {who && p.uploaded_by && (
+                <div style={S.photoByAv}>
+                  <Avatar person={who(p.uploaded_by)} size={26} style={{ border: "2px solid #fff" }} />
+                </div>
               )}
             </div>
           ))}
