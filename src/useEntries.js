@@ -127,5 +127,25 @@ export function useEntries(coupleId, userId) {
     [fetchAll]
   );
 
-  return { byDate, loading, saveEntry, uploadPhotos, deletePhoto };
+  // 그날의 기록(오늘의 우리) 통째로 삭제 — 잘못된 날짜에 등록했을 때 등.
+  // photos 행은 entries FK(on delete cascade)로 같이 지워지므로 스토리지 파일만 먼저 정리한다.
+  const deleteEntry = useCallback(
+    async (date) => {
+      const entry = byDateRef.current[date];
+      if (!entry?.id) return;
+      const paths = (entry.photos || []).map((p) => p.storage_path).filter(Boolean);
+      if (paths.length) await supabase.storage.from("photos").remove(paths);
+      const { error } = await supabase.from("entries").delete().eq("id", entry.id).eq("couple_id", coupleId);
+      if (error) throw error;
+      setByDate((prev) => {
+        const next = { ...prev };
+        delete next[date];
+        return next;
+      });
+      await fetchAll();
+    },
+    [coupleId, fetchAll]
+  );
+
+  return { byDate, loading, saveEntry, uploadPhotos, deletePhoto, deleteEntry };
 }

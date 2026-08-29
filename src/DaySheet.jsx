@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import { S } from "./styles";
 import { HOLIDAYS } from "./constants";
 import { prettyDate, hasAny } from "./utils";
+import { toast } from "./toast";
 import Avatar from "./Avatar";
 import DiaryTab from "./DiaryTab";
 import ScheduleForm from "./ScheduleForm";
+import ConfirmSheet from "./ConfirmSheet";
 import { IconX, IconPlus } from "./Icons";
 import MoreMenu from "./MoreMenu";
 import { useSheetDrag } from "./useSheetDrag";
@@ -20,6 +22,7 @@ export default function DaySheet({
   saveEntry,
   uploadPhotos,
   deletePhoto,
+  deleteEntry,
   daySchedules,
   addSchedule,
   updateSchedule,
@@ -29,6 +32,8 @@ export default function DaySheet({
   const [subTab, setSubTab] = useState(onlyDiary ? "diary" : initialTab);
   const [form, setForm] = useState(null); // null | { date } | { editing }
   const [diaryMode, setDiaryMode] = useState(() => (forceEdit || !hasAny(entry) ? "edit" : "view"));
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const effectiveTab = onlyDiary ? "diary" : subTab;
   const diaryHasContent = hasAny(entry);
 
@@ -50,11 +55,12 @@ export default function DaySheet({
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             {effectiveTab === "diary" && diaryHasContent && (
               <MoreMenu
-                items={
+                items={[
                   diaryMode === "view"
-                    ? [{ label: "수정", onClick: () => setDiaryMode("edit") }]
-                    : [{ label: "완료", onClick: () => setDiaryMode("view") }]
-                }
+                    ? { label: "수정", onClick: () => setDiaryMode("edit") }
+                    : { label: "완료", onClick: () => setDiaryMode("view") },
+                  { label: "이 날 기록 삭제", onClick: () => setConfirmDelete(true), danger: true },
+                ]}
               />
             )}
             <button style={S.closeBtn} onClick={onClose}><IconX size={14} /></button>
@@ -132,6 +138,36 @@ export default function DaySheet({
           onDelete={deleteSchedule}
           onClose={() => setForm(null)}
         />
+      )}
+
+      {confirmDelete && (
+        <div onClick={(ev) => ev.stopPropagation()}>
+        <ConfirmSheet
+          title="이 날 기록 삭제"
+          confirmLabel={deleting ? "삭제 중…" : "삭제"}
+          danger
+          onConfirm={async () => {
+            if (deleting) return;
+            setDeleting(true);
+            try {
+              await deleteEntry(date);
+              setConfirmDelete(false);
+              onClose();
+              toast("기록을 삭제했어요");
+            } catch (e) {
+              console.error("기록 삭제 실패:", e);
+              setDeleting(false);
+              toast("삭제하지 못했어요. 잠시 후 다시 시도해주세요.");
+            }
+          }}
+          onClose={() => !deleting && setConfirmDelete(false)}
+        >
+          <div>{prettyDate(date)}의 기록(사진·기분·이야기·스탬프)을 모두 지울까요?</div>
+          <div style={{ marginTop: 8, fontSize: 12.5, color: "var(--text-muted2)" }}>
+            둘 중 누가 남긴 내용이든 함께 사라지고 되돌릴 수 없어요. 일정은 지워지지 않아요.
+          </div>
+        </ConfirmSheet>
+        </div>
       )}
     </div>
   );

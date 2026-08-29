@@ -107,7 +107,7 @@ export default function App() {
 
   const coupleId = couple?.id || null;
   const userId = session?.user?.id || null;
-  const { byDate, saveEntry, uploadPhotos, deletePhoto } = useEntries(coupleId, userId);
+  const { byDate, saveEntry, uploadPhotos, deletePhoto, deleteEntry } = useEntries(coupleId, userId);
   const { schedules, byDate: scheduleByDate, addSchedule, updateSchedule, deleteSchedule } = useSchedules(coupleId);
 
   const signOut = async () => {
@@ -297,6 +297,7 @@ export default function App() {
           saveEntry={saveEntry}
           uploadPhotos={uploadPhotos}
           deletePhoto={deletePhoto}
+          deleteEntry={deleteEntry}
           daySchedules={scheduleByDate(selected.date)}
           addSchedule={addSchedule}
           updateSchedule={updateSchedule}
