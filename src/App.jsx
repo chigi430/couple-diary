@@ -7,6 +7,7 @@ import { useSchedules } from "./useSchedules";
 import { useHideOnScroll } from "./useHideOnScroll";
 import { ensurePushHealthy } from "./push";
 import Auth from "./Auth";
+import Intro from "./Intro";
 import CoupleGate from "./CoupleGate";
 import Today from "./Today";
 import Calendar from "./Calendar";
@@ -28,6 +29,7 @@ export default function App() {
   const [couple, setCouple] = useState(null);
   const [people, setPeople] = useState({}); // { userId: profile }
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [introDone, setIntroDone] = useState(false);
 
   const wantsRecap = new URLSearchParams(window.location.search).get("recap");
   const [tab, setTab] = useState(wantsRecap ? "timeline" : "today");
@@ -149,10 +151,12 @@ export default function App() {
   };
 
   // ── 화면 분기 ──
-  if (!ready) return <div style={S.center}>불러오는 중…</div>;
-  if (!session) return <Auth />;
-  if (loadingProfile && !profile) return <div style={S.center}>불러오는 중…</div>;
-  if (profile && !profile.couple_id) return <CoupleGate onDone={loadProfile} onSignOut={signOut} />;
+  // 인트로(스플래시)는 어느 분기가 렌더되든 항상 첫 자식으로 두어 계속 마운트 상태를 유지한다.
+  const intro = !introDone && <Intro hold={!ready} onDone={() => setIntroDone(true)} />;
+  if (!ready) return <>{intro}<div style={S.center}>불러오는 중…</div></>;
+  if (!session) return <>{intro}<Auth /></>;
+  if (loadingProfile && !profile) return <>{intro}<div style={S.center}>불러오는 중…</div></>;
+  if (profile && !profile.couple_id) return <>{intro}<CoupleGate onDone={loadProfile} onSignOut={signOut} /></>;
 
   const anni = anniversaryInfo(couple?.anniversary_date);
   const memberCount = Object.keys(people).length;
@@ -167,6 +171,7 @@ export default function App() {
 
   return (
     <div style={S.root}>
+      {intro}
       <style>{css}</style>
       <ToastHost />
 
