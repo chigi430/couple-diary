@@ -73,8 +73,8 @@ export default function ProfileView({
     try {
       const { data, error } = await supabase.rpc("poke_partner");
       if (error) throw error;
-      if (data === "ok") toast("콕 찔렀어요 💗");
-      else if (data === "cooldown") toast("방금 보냈어요. 잠시 후 다시 보낼 수 있어요.");
+      if (data === "ok") toast(`${name}님에게 콕 알림을 보냈어요 💗`);
+      else if (data === "cooldown") toast("조금 전에 보냈어요. 3분 뒤에 다시 보낼 수 있어요.");
       else toast("아직 연결된 상대가 없어요.");
     } catch (e) {
       console.error("콕 찌르기 실패:", e);

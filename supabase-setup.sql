@@ -667,7 +667,7 @@ alter table profiles add column if not exists birthday       date;
 alter table profiles add column if not exists last_poke_at   timestamptz;
 alter table profiles add column if not exists notify_poke    boolean not null default true;
 
--- "생각나서 콕" — 상대에게 즉시 푸시. 도배 방지로 15분 쿨다운.
+-- "생각나서 콕" — 상대에게 즉시 푸시. 도배 방지로 3분 쿨다운.
 -- 반환값: 'ok' | 'cooldown' | 'no_partner'
 create or replace function public.poke_partner()
 returns text
@@ -688,7 +688,7 @@ begin
     return 'no_partner';
   end if;
 
-  if last_at is not null and now() - last_at < interval '15 minutes' then
+  if last_at is not null and now() - last_at < interval '3 minutes' then
     return 'cooldown';
   end if;
 
