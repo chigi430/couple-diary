@@ -62,11 +62,27 @@ function loadImage(src) {
   });
 }
 
-// 성공 시 { blob, ext } 반환. 실패(예: HEIC 등 브라우저가 못 그림) 시 원본 그대로.
+// 아이폰에서 찍은 사진은 기본이 HEIC인데, 브라우저 <canvas>/<img>가 못 그리는 경우가 많아서
+// (사파리는 되지만 크롬/안드로이드는 안 됨) 미리 JPEG로 변환해줘야 함 — 안 하면 압축도 실패하고
+// 업로드된 원본도 다른 기기에서 영영 안 보임.
+function isHeic(file) {
+  const type = (file.type || "").toLowerCase();
+  if (type === "image/heic" || type === "image/heif") return true;
+  return /\.(heic|heif)$/i.test(file.name || "");
+}
+
+// 성공 시 { blob, ext } 반환. 실패 시 원본 그대로.
 export async function compressImage(file, maxDim = 1280, quality = 0.8) {
   try {
-    if (!file.type.startsWith("image/")) return { blob: file, ext: extOf(file.name) };
-    const dataUrl = await readAsDataURL(file);
+    let workFile = file;
+    if (isHeic(file)) {
+      const heic2any = (await import("heic2any")).default;
+      const converted = await heic2any({ blob: file, toType: "image/jpeg", quality });
+      workFile = Array.isArray(converted) ? converted[0] : converted;
+    } else if (!file.type.startsWith("image/")) {
+      return { blob: file, ext: extOf(file.name) };
+    }
+    const dataUrl = await readAsDataURL(workFile);
     const img = await loadImage(dataUrl);
     let { width, height } = img;
     if (Math.max(width, height) > maxDim) {
