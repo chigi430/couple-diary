@@ -20,3 +20,11 @@
   - 배포 승인은 채팅이 아니라 **앱 안의 [배포]/[대기] 버튼으로만** 이뤄지도록 확정 — 야간 루틴은 절대 main에 직접 push하지 않고 `claude/fix-*` 브랜치 + PR만 준비.
   - 이 문서(`maintenance-log.md`) 신설.
 - **참고**: 매일 자정 실행되는 부분(Part B)은 claude.ai의 "루틴" 기능으로 사용자가 직접 등록해야 함 — 세부 사항은 `CLAUDE.md`의 "유지보수 자동화" 절 참고.
+
+## 2026-08-29 — 야간 점검 루틴 첫 실행, 네트워크 정책으로 인해 실패
+
+- **트리거**: 새로 등록된 야간 점검 루틴(Part B)의 첫 자동 실행.
+- **진단**: 1단계(`maintenance-bot`에 `{"action":"list"}` POST)부터 실패. 이 루틴이 도는 Claude Code 클라우드 실행 환경의 아웃바운드 네트워크 정책이 `heksenfpxztwwstbqkll.supabase.co`로의 HTTPS 연결을 조직 정책으로 차단함(`CONNECT tunnel failed, response 403` — 프록시 게이트웨이가 CONNECT 자체를 거부, DNS/자격증명 문제 아님). 재시도해도 동일하게 거부됨.
+- **영향**: 열린 제보(`open_reports`) 목록도, 서버 상태 지표(`health`)도 가져오지 못해 2~3단계(제보 판단/수정, health 이상 조사)를 전혀 수행할 수 없었음. `notify` 액션 호출도 실패해서 앱을 통한 푸시 알림 발송도 안 됨(대신 세션 계정 이메일로 별도 알림 발송함).
+- **조치**: 코드 변경 없음(원인이 코드가 아니라 실행 환경의 네트워크 허용 목록이라 이 세션에서 고칠 수 없는 항목). 이 로그 기록만 추가.
+- **필요한 사람 조치**: 이 루틴이 등록된 Claude Code 환경(claude.ai/code/routines 또는 환경 설정)에서 아웃바운드 네트워크 정책에 `heksenfpxztwwstbqkll.supabase.co`(또는 `*.supabase.co`)를 허용 목록에 추가해야 다음 실행부터 정상 동작함.
