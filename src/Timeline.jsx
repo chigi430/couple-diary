@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { S } from "./styles";
 import { STAMPS } from "./constants";
-import { prettyDate, prettyTime, hasAny } from "./utils";
+import { prettyDate, prettyTime, hasAny, placesOf, placeSummary } from "./utils";
 import SignedImage from "./SignedImage";
 import Avatar from "./Avatar";
 import PlacesMap from "./PlacesMap";
@@ -36,9 +36,9 @@ export default function Timeline({ byDate, people, onOpen, autoOpenRecap, onAuto
 
   const places = useMemo(
     () =>
-      dates
-        .filter((k) => byDate[k].place_lat != null && byDate[k].place_lng != null)
-        .map((k) => ({ date: k, lat: byDate[k].place_lat, lng: byDate[k].place_lng, place: byDate[k].place })),
+      dates.flatMap((k) =>
+        placesOf(byDate[k]).map((p, i) => ({ date: k, idx: i, lat: p.lat, lng: p.lng, place: p.name }))
+      ),
     [dates, byDate]
   );
 
@@ -74,7 +74,7 @@ export default function Timeline({ byDate, people, onOpen, autoOpenRecap, onAuto
             {mapOpen && <PlacesMap places={places} onOpen={onOpen} />}
             <div style={S.placeListWrap}>
               {places.map((p) => (
-                <button key={p.date} style={S.placeListItem} onClick={() => onOpen(p.date)}>
+                <button key={`${p.date}-${p.idx}`} style={S.placeListItem} onClick={() => onOpen(p.date)}>
                   <span style={S.placeListDate}>{p.date.slice(5).replace("-", ".")}</span>
                   <span style={S.placeListName}>📍 {p.place || "장소 미상"}</span>
                 </button>
@@ -115,9 +115,9 @@ export default function Timeline({ byDate, people, onOpen, autoOpenRecap, onAuto
                     </div>
                   )}
                   {e.note && <p style={S.tlNote}>{e.note}</p>}
-                  {(e.stamps && e.stamps.length > 0) || e.place || e.food ? (
+                  {(e.stamps && e.stamps.length > 0) || placeSummary(e) || e.food ? (
                     <div style={S.tlChips}>
-                      {e.place && <span style={S.tlChip}>📍 {e.place}</span>}
+                      {placeSummary(e) && <span style={S.tlChip}>📍 {placeSummary(e)}</span>}
                       {e.food && <span style={S.tlChip}>🍽 {e.food}</span>}
                       {(e.stamps || []).map((sk) => {
                         const s = STAMPS.find((x) => x.k === sk);

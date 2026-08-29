@@ -91,6 +91,28 @@ function extOf(name) {
   return m ? m[1].toLowerCase() : "jpg";
 }
 
+// 하루 기록의 장소 목록을 정규화해서 반환 (신규 places 배열 우선, 없으면 레거시 place_lat/lng)
+export function placesOf(entry) {
+  if (!entry) return [];
+  if (Array.isArray(entry.places) && entry.places.length) {
+    return entry.places.filter((p) => p && p.lat != null && p.lng != null);
+  }
+  if (entry.place_lat != null && entry.place_lng != null) {
+    return [{ name: entry.place || "", lat: entry.place_lat, lng: entry.place_lng }];
+  }
+  return [];
+}
+
+// 미리보기용 짧은 장소 문구: "성수동" 또는 "성수동 외 2곳"
+export function placeSummary(entry) {
+  const ps = placesOf(entry);
+  if (ps.length) {
+    const first = ps[0].name || "장소";
+    return ps.length > 1 ? `${first} 외 ${ps.length - 1}곳` : first;
+  }
+  return (entry && entry.place) || "";
+}
+
 // 일기 기록에 실제 내용이 하나라도 있는지 (사진/메모/일정/기분/스탬프)
 export function hasAny(entry) {
   return !!(

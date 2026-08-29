@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { S } from "./styles";
 import { MOODS, STAMPS } from "./constants";
-import { prettyTime, hasAny } from "./utils";
+import { prettyTime, hasAny, placesOf } from "./utils";
 import SignedImage from "./SignedImage";
 import Avatar from "./Avatar";
 import PlacePicker from "./PlacePicker";
@@ -16,6 +16,7 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
   const e = entry || {};
   const stamps = e.stamps || [];
   const photos = e.photos || [];
+  const placeList = placesOf(e);
 
   const who = (id) => people[id] || { emoji: "🙂", color: "#D98763", display_name: "?" };
   const myInfo = who(me);
@@ -125,7 +126,9 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
           <>
             <div style={S.viewMetaRow}>
               {e.mood && <span style={S.metaPill}>{e.mood}</span>}
-              {e.place && <span style={S.metaPill}>📍 {e.place}</span>}
+              {placeList.length > 0
+                ? placeList.map((p, i) => <span key={i} style={S.metaPill}>📍 {p.name || "찍은 위치"}</span>)
+                : e.place && <span style={S.metaPill}>📍 {e.place}</span>}
               {e.food && <span style={S.metaPill}>🍽 {e.food}</span>}
               {stamps.map((k) => {
                 const s = STAMPS.find((x) => x.k === k);
@@ -209,7 +212,15 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
       <div style={S.twoCol}>
         <div style={{ flex: 1 }}>
           <div style={S.fieldLabel}>장소</div>
-          <input key={e.place || ""} style={S.input} placeholder="예: 성수동" defaultValue={e.place || ""} onBlur={(ev) => set({ place: ev.target.value })} />
+          {placeList.length > 0 ? (
+            <div style={S.placeChips}>
+              {placeList.map((p, i) => (
+                <span key={i} style={S.placeChip}>📍 {p.name || "찍은 위치"}</span>
+              ))}
+            </div>
+          ) : (
+            <input key={e.place || ""} style={S.input} placeholder="예: 성수동" defaultValue={e.place || ""} onBlur={(ev) => set({ place: ev.target.value })} />
+          )}
         </div>
         <div style={{ flex: 1 }}>
           <div style={S.fieldLabel}>오늘 먹은 것</div>
@@ -218,15 +229,22 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
       </div>
 
       {!showPicker && (
-        <button style={S.placePickToggle} onClick={() => setShowPicker(true)}>📍 지도에서 선택</button>
+        <button style={S.placePickToggle} onClick={() => setShowPicker(true)}>
+          📍 지도에서 {placeList.length > 0 ? "장소 수정" : "선택"}
+        </button>
       )}
       {showPicker && (
         <PlacePicker
-          initialLat={e.place_lat}
-          initialLng={e.place_lng}
+          initialPlaces={placeList}
           onCancel={() => setShowPicker(false)}
-          onPick={({ place, lat, lng }) => {
-            set({ place, place_lat: lat, place_lng: lng });
+          onPick={(places) => {
+            const first = places[0];
+            set({
+              places,
+              place: first ? first.name : "",
+              place_lat: first ? first.lat : null,
+              place_lng: first ? first.lng : null,
+            });
             setShowPicker(false);
           }}
         />

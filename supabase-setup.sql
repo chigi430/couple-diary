@@ -300,6 +300,17 @@ update entries
    and (notes is null or notes = '{}'::jsonb);
 
 -- ────────────────────────────────────────────────
+-- 13-2) 하루에 여러 장소를 지도에 찍을 수 있게 — places = [{ "name", "lat", "lng" }, ...]
+--       기존 place/place_lat/place_lng(타임라인 칩·프리텍스트 입력용)에는 첫 장소를 미러링
+-- ────────────────────────────────────────────────
+alter table entries add column if not exists places jsonb not null default '[]'::jsonb;
+
+update entries
+   set places = jsonb_build_array(jsonb_build_object('name', coalesce(place, ''), 'lat', place_lat, 'lng', place_lng))
+ where place_lat is not null and place_lng is not null
+   and (places is null or places = '[]'::jsonb);
+
+-- ────────────────────────────────────────────────
 -- 14) 초대코드 만료 (1시간) + 재발급
 -- ────────────────────────────────────────────────
 alter table couples add column if not exists invite_code_expires_at timestamptz not null default (now() + interval '1 hour');

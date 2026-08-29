@@ -1,15 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { S } from "./styles";
 import { loadKakaoMaps } from "./kakaoMap";
+import { IconX } from "./Icons";
 
 const DEFAULT_CENTER = { lat: 37.5665, lng: 126.978 }; // 서울시청 (위치 정보를 못 가져올 때 기본값)
 
-// "서울특별시" → "서울", "경기도" → "경기" 처럼 시/도 표기를 간단하게
 function simplifyRegion1(name = "") {
   return name.replace(/(특별자치시|특별자치도|특별시|광역시|도)$/, "") || name;
 }
 
-// 카카오 좌표→주소 결과에서 "서울, 성수동" 같은 짧은 표시용 문자열 생성
 function simplifyAddress(addr) {
   if (!addr) return "";
   const region1 = simplifyRegion1(addr.region_1depth_name);
@@ -17,20 +16,28 @@ function simplifyAddress(addr) {
   return [region1, region3].filter(Boolean).join(", ");
 }
 
-export default function PlacePicker({ initialLat, initialLng, onPick, onCancel }) {
+const near = (a, b) => Math.abs(a.lat - b.lat) < 1e-6 && Math.abs(a.lng - b.lng) < 1e-6;
+
+// 지도에서 장소를 여러 개 찍을 수 있는 선택기. onPick(places) 로 [{ name, lat, lng }] 배열을 돌려준다.
+export default function PlacePicker({ initialPlaces = [], onPick, onCancel }) {
   const mapRef = useRef(null);
-  const markerRef = useRef(null);
+  const markersRef = useRef([]);
   const kakaoRef = useRef(null);
   const mapObjRef = useRef(null);
-  const placeAtRef = useRef(null);
-  const [picked, setPicked] = useState(
-    initialLat && initialLng ? { lat: initialLat, lng: initialLng, address: "" } : null
+  const [selected, setSelected] = useState(
+    (initialPlaces || []).filter((p) => p && p.lat != null && p.lng != null)
   );
+  const [mapReady, setMapReady] = useState(false);
   const [err, setErr] = useState("");
   const [locErr, setLocErr] = useState("");
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState(null); // null=검색 전, []=결과 없음
+  const [results, setResults] = useState(null);
   const [searching, setSearching] = useState(false);
+
+  const addPlace = (p) => {
+    setSelected((cur) => (cur.some((q) => near(q, p)) ? cur : [...cur, p]));
+  };
+  const removePlace = (i) => setSelected((cur) => cur.filter((_, idx) => idx !== i));
 
   useEffect(() => {
     let alive = true;
@@ -41,37 +48,20 @@ export default function PlacePicker({ initialLat, initialLng, onPick, onCancel }
         kakaoRef.current = kakao;
         const geocoder = new kakao.maps.services.Geocoder();
 
-        // label 이 있으면(검색 결과) 그 이름을 그대로 쓰고, 없으면(지도 탭) 좌표→주소로 채운다.
-        const placeAt = (latlng, label) => {
-          if (markerRef.current) markerRef.current.setMap(null);
-          markerRef.current = new kakao.maps.Marker({ position: latlng, map: mapObjRef.current });
-          setPicked({ lat: latlng.getLat(), lng: latlng.getLng(), address: label || "주소 확인 중…" });
-          if (label) return;
-          geocoder.coord2Address(latlng.getLng(), latlng.getLat(), (result, status) => {
-            if (status !== kakao.maps.services.Status.OK) return;
-            const addr = simplifyAddress(result[0]?.address);
-            setPicked((p) => (p ? { ...p, address: addr } : p));
-          });
-        };
-        placeAtRef.current = placeAt;
-
+        const first = selected[0];
         const startCenter = new kakao.maps.LatLng(
-          initialLat || DEFAULT_CENTER.lat,
-          initialLng || DEFAULT_CENTER.lng
+          first ? first.lat : DEFAULT_CENTER.lat,
+          first ? first.lng : DEFAULT_CENTER.lng
         );
         const map = new kakao.maps.Map(mapRef.current, { center: startCenter, level: 4 });
         mapObjRef.current = map;
+        setMapReady(true);
 
-        if (initialLat && initialLng) {
-          markerRef.current = new kakao.maps.Marker({ position: startCenter, map });
-        } else if (navigator.geolocation) {
-          // 신규 등록이면 내 현재 위치를 기반으로 자동으로 찍어준다.
+        if (!first && navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
               if (!alive) return;
-              const here = new kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
-              map.setCenter(here);
-              placeAt(here);
+              map.setCenter(new kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
             },
             (geoErr) => {
               console.warn("현재 위치를 가져오지 못했습니다:", geoErr.code, geoErr.message);
@@ -81,7 +71,18 @@ export default function PlacePicker({ initialLat, initialLng, onPick, onCancel }
           );
         }
 
-        kakao.maps.event.addListener(map, "click", (mouseEvent) => placeAt(mouseEvent.latLng));
+        // 지도를 탭하면 그 지점의 주소를 읽어서 목록에 추가
+        kakao.maps.event.addListener(map, "click", (mouseEvent) => {
+          const ll = mouseEvent.latLng;
+          const base = { name: "", lat: ll.getLat(), lng: ll.getLng() };
+          addPlace(base);
+          geocoder.coord2Address(ll.getLng(), ll.getLat(), (result, status) => {
+            if (status !== kakao.maps.services.Status.OK) return;
+            const addr = simplifyAddress(result[0]?.address);
+            if (!addr) return;
+            setSelected((cur) => cur.map((p) => (near(p, base) && !p.name ? { ...p, name: addr } : p)));
+          });
+        });
       })
       .catch((e) => {
         console.error("지도 로드 실패:", e);
@@ -94,14 +95,29 @@ export default function PlacePicker({ initialLat, initialLng, onPick, onCancel }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // selected 가 바뀔 때마다 마커를 다시 그린다
+  useEffect(() => {
+    const kakao = kakaoRef.current;
+    const map = mapObjRef.current;
+    if (!kakao || !map) return;
+    markersRef.current.forEach((m) => m.setMap(null));
+    markersRef.current = selected.map(
+      (p) => new kakao.maps.Marker({ position: new kakao.maps.LatLng(p.lat, p.lng), map })
+    );
+    if (selected.length > 1) {
+      const bounds = new kakao.maps.LatLngBounds();
+      selected.forEach((p) => bounds.extend(new kakao.maps.LatLng(p.lat, p.lng)));
+      map.setBounds(bounds);
+    }
+  }, [selected, mapReady]);
+
   const runSearch = (ev) => {
     if (ev) ev.preventDefault();
     const q = query.trim();
     const kakao = kakaoRef.current;
     if (!q || !kakao) return;
     setSearching(true);
-    const ps = new kakao.maps.services.Places();
-    ps.keywordSearch(q, (data, status) => {
+    new kakao.maps.services.Places().keywordSearch(q, (data, status) => {
       setSearching(false);
       setResults(status === kakao.maps.services.Status.OK ? data.slice(0, 12) : []);
     });
@@ -109,13 +125,15 @@ export default function PlacePicker({ initialLat, initialLng, onPick, onCancel }
 
   const pickResult = (r) => {
     const kakao = kakaoRef.current;
-    if (!kakao || !mapObjRef.current || !placeAtRef.current) return;
-    const latlng = new kakao.maps.LatLng(Number(r.y), Number(r.x));
-    mapObjRef.current.setLevel(3);
-    mapObjRef.current.setCenter(latlng);
-    placeAtRef.current(latlng, r.place_name);
+    const lat = Number(r.y);
+    const lng = Number(r.x);
+    if (mapObjRef.current && kakao) {
+      mapObjRef.current.setLevel(3);
+      mapObjRef.current.setCenter(new kakao.maps.LatLng(lat, lng));
+    }
+    addPlace({ name: r.place_name, lat, lng });
     setResults(null);
-    setQuery(r.place_name);
+    setQuery("");
   };
 
   return (
@@ -142,12 +160,7 @@ export default function PlacePicker({ initialLat, initialLng, onPick, onCancel }
                 <div style={S.placeSearchEmpty}>검색 결과가 없어요.</div>
               ) : (
                 results.map((r) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    style={S.placeSearchItem}
-                    onClick={() => pickResult(r)}
-                  >
+                  <button key={r.id} type="button" style={S.placeSearchItem} onClick={() => pickResult(r)}>
                     <span style={S.placeSearchName}>{r.place_name}</span>
                     <span style={S.placeSearchAddr}>{r.road_address_name || r.address_name}</span>
                   </button>
@@ -157,23 +170,34 @@ export default function PlacePicker({ initialLat, initialLng, onPick, onCancel }
           )}
 
           <div ref={mapRef} style={S.placePickMap} />
-          <div style={S.placePickHint}>
-            {picked
-              ? picked.address || "지도를 탭해서 위치를 찍어주세요."
-              : locErr
-              ? `현재 위치를 못 가져왔어요 (${locErr}). 검색하거나 지도를 탭해서 선택해주세요.`
-              : "검색하거나 지도를 탭해서 위치를 찍어주세요."}
-          </div>
+
+          {selected.length > 0 ? (
+            <div style={S.placeChips}>
+              {selected.map((p, i) => (
+                <span key={i} style={S.placeChipEditable}>
+                  📍 {p.name || "찍은 위치"}
+                  <button style={S.placeChipX} onClick={() => removePlace(i)} aria-label="빼기">
+                    <IconX size={10} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div style={S.placePickHint}>
+              {locErr
+                ? `현재 위치를 못 가져왔어요. 검색하거나 지도를 탭해서 장소를 추가해주세요.`
+                : "검색하거나 지도를 탭해서 장소를 추가하세요. 여러 곳 추가할 수 있어요."}
+            </div>
+          )}
         </>
       )}
       <div style={S.placePickConfirmRow}>
         <button style={S.smallActionBtn} onClick={onCancel}>취소</button>
         <button
           style={{ ...S.smallActionBtn, background: "#D98763", color: "#fff", border: "none" }}
-          disabled={!picked}
-          onClick={() => picked && onPick({ place: picked.address || "", lat: picked.lat, lng: picked.lng })}
+          onClick={() => onPick(selected)}
         >
-          이 위치로 선택
+          {selected.length ? `선택 완료 (${selected.length}곳)` : "장소 비우기"}
         </button>
       </div>
     </div>

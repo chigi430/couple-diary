@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { S } from "./styles";
 import { STAMPS, HOLIDAYS } from "./constants";
-import { todayStr, prettyDate, prettyTime, hasAny } from "./utils";
+import { todayStr, prettyDate, prettyTime, hasAny, placeSummary } from "./utils";
 import SignedImage from "./SignedImage";
 import PhotoCarousel from "./PhotoCarousel";
 import Avatar from "./Avatar";
@@ -74,7 +74,7 @@ export default function Today({ byDate, people, onOpen }) {
             {e.photos && e.photos.length > 0 && <PhotoCarousel photos={e.photos} who={who} />}
             <div style={S.todayMetaRow}>
               {e.mood && <span style={S.metaPill}>{e.mood}</span>}
-              {e.place && <span style={S.metaPill}>📍 {e.place}</span>}
+              {placeSummary(e) && <span style={S.metaPill}>📍 {placeSummary(e)}</span>}
               {e.food && <span style={S.metaPill}>🍽 {e.food}</span>}
               {(e.stamps || []).map((k) => {
                 const s = STAMPS.find((x) => x.k === k);
@@ -145,7 +145,7 @@ export default function Today({ byDate, people, onOpen }) {
 
                 <button style={S.feedFootBtn} onClick={() => onOpen(k)}>
                   <div style={S.todayMetaRow}>
-                    {fe.place && <span style={S.metaPill}>📍 {fe.place}</span>}
+                    {placeSummary(fe) && <span style={S.metaPill}>📍 {placeSummary(fe)}</span>}
                     {fe.food && <span style={S.metaPill}>🍽 {fe.food}</span>}
                     {(fe.stamps || []).map((sk) => {
                       const s = STAMPS.find((x) => x.k === sk);
