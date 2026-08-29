@@ -3,6 +3,7 @@ import { S } from "./styles";
 import { IconX } from "./Icons";
 import MoreMenu from "./MoreMenu";
 import { useSheetDrag } from "./useSheetDrag";
+import { useScrollLock } from "./scrollLock";
 import { toast } from "./toast";
 import SignedImage from "./SignedImage";
 
@@ -26,6 +27,7 @@ const MAINTAINER_USER_ID = import.meta.env.VITE_MAINTAINER_USER_ID;
 export default function BugReportSheet({ userId, reports, addReport, deployReport, onClose }) {
   const isMaintainer = userId === MAINTAINER_USER_ID;
   const { handleProps, handleStyle, sheetStyle, overlayStyle, sheetRef, overlayRef } = useSheetDrag(onClose);
+  useScrollLock();
   const fileRef = useRef(null);
   const [description, setDescription] = useState("");
   const [photoFile, setPhotoFile] = useState(null);

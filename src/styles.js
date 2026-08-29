@@ -190,9 +190,9 @@ export const S = {
   tabIcon: { fontSize: 14, lineHeight: 1 },
 
   overlay: { position: "fixed", inset: 0, background: "rgba(58,34,28,0.42)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 60, animation: "fadeIn .16s ease", backdropFilter: "blur(2px)" },
-  sheet: { width: "100%", maxWidth: 460, background: "var(--sheet)", borderRadius: "22px 22px 0 0", padding: "8px 17px 22px", minHeight: "90vh", maxHeight: "90vh", overflowY: "auto", animation: "sheetUp .22s cubic-bezier(.2,.8,.2,1)" },
+  sheet: { width: "100%", maxWidth: 460, background: "var(--sheet)", borderRadius: "22px 22px 0 0", padding: "8px 17px 22px", minHeight: "90vh", maxHeight: "90vh", overflowY: "auto", overscrollBehavior: "contain", animation: "sheetUp .22s cubic-bezier(.2,.8,.2,1)" },
   // 내용이 짧은 시트(확인창 등)는 90vh를 다 채우지 않고 내용만큼만 차지하도록
-  sheetCompact: { width: "100%", maxWidth: 460, background: "var(--sheet)", borderRadius: "22px 22px 0 0", padding: "8px 17px 22px", maxHeight: "90vh", overflowY: "auto", animation: "sheetUp .22s cubic-bezier(.2,.8,.2,1)" },
+  sheetCompact: { width: "100%", maxWidth: 460, background: "var(--sheet)", borderRadius: "22px 22px 0 0", padding: "8px 17px 22px", maxHeight: "90vh", overflowY: "auto", overscrollBehavior: "contain", animation: "sheetUp .22s cubic-bezier(.2,.8,.2,1)" },
   sheetHandleZone: { display: "flex", justifyContent: "center", padding: "12px 0 10px", marginTop: -8 },
   sheetHandle: { width: 36, height: 4, borderRadius: 4, background: "var(--border)" },
   sheetHead: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 7 },
@@ -387,7 +387,7 @@ export const S = {
   stCompareName: { fontSize: 11, color: "var(--text-muted)" },
 
   // 연말 리캡
-  recapSheet: { width: "100%", maxWidth: 460, background: "var(--sheet)", borderRadius: "22px 22px 0 0", padding: "8px 0 18px", minHeight: "88vh", maxHeight: "88vh", display: "flex", flexDirection: "column", animation: "sheetUp .22s cubic-bezier(.2,.8,.2,1)" },
+  recapSheet: { width: "100%", maxWidth: 460, background: "var(--sheet)", borderRadius: "22px 22px 0 0", padding: "8px 0 18px", minHeight: "88vh", maxHeight: "88vh", display: "flex", flexDirection: "column", overscrollBehavior: "contain", animation: "sheetUp .22s cubic-bezier(.2,.8,.2,1)" },
   recapHead: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 17px 10px" },
   recapYearNav: { display: "flex", alignItems: "center", gap: 10 },
   recapYearBtn: { border: "none", background: "var(--soft2)", width: 26, height: 26, borderRadius: 8, color: "var(--text-accent)", fontSize: 15, cursor: "pointer" },

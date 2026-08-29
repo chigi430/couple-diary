@@ -5,6 +5,7 @@ import { compressImage, uuid } from "./utils";
 import { toast } from "./toast";
 import Avatar from "./Avatar";
 import MoreMenu from "./MoreMenu";
+import { useScrollLock } from "./scrollLock";
 import { IconX, IconCalendar, IconList } from "./Icons";
 
 // 카카오톡 프로필처럼 전체화면으로 상대(또는 내) 프로필을 보여주는 오버레이.
@@ -21,6 +22,7 @@ export default function ProfileView({
   onRefresh,
   onClose,
 }) {
+  useScrollLock();
   const fileRef = useRef(null);
   const [cover, setCover] = useState(person?.cover_url || "");
   const [uploading, setUploading] = useState(false);

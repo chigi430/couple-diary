@@ -12,6 +12,7 @@ import MoreMenu from "./MoreMenu";
 import ConfirmSheet from "./ConfirmSheet";
 import BugReportSheet from "./BugReportSheet";
 import { useSheetDrag } from "./useSheetDrag";
+import { lockScroll, unlockScroll } from "./scrollLock";
 import { useBugReports } from "./useBugReports";
 
 const IS_IOS = /iP(hone|od|ad)/.test(navigator.userAgent);
@@ -95,6 +96,13 @@ export default function Settings({ profile, partner, coupleId, onSaved, onSignOu
     if (editSignal) openEdit();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editSignal]);
+
+  // 프로필 수정 시트가 열려 있는 동안 뒤 배경 스크롤 잠금
+  useEffect(() => {
+    if (!editOpen) return;
+    lockScroll();
+    return unlockScroll;
+  }, [editOpen]);
 
   const toggleDark = () => {
     const next = !darkOn;

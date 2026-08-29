@@ -10,6 +10,7 @@ import ConfirmSheet from "./ConfirmSheet";
 import { IconX, IconPlus } from "./Icons";
 import MoreMenu from "./MoreMenu";
 import { useSheetDrag } from "./useSheetDrag";
+import { useScrollLock } from "./scrollLock";
 
 export default function DaySheet({
   date,
@@ -40,6 +41,7 @@ export default function DaySheet({
   const who = (id) => people[id] || { emoji: "🙂", color: "#D98763", display_name: "?" };
   const meInfo = who(me);
   const { handleProps, handleStyle, sheetStyle, overlayStyle, sheetRef, overlayRef } = useSheetDrag(onClose);
+  useScrollLock();
 
   return (
     <div ref={overlayRef} style={{ ...S.overlay, ...overlayStyle }} onClick={onClose}>

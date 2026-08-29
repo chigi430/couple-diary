@@ -4,6 +4,7 @@ import { STAMPS } from "./constants";
 import SignedImage from "./SignedImage";
 import { IconX } from "./Icons";
 import { useSheetDrag } from "./useSheetDrag";
+import { useScrollLock } from "./scrollLock";
 import { hasAny } from "./utils";
 
 function computeYearStats(byDate, year) {
@@ -148,6 +149,7 @@ export default function Recap({ byDate, people, onClose }) {
   ];
 
   const { handleProps, handleStyle, sheetStyle, overlayStyle, sheetRef, overlayRef } = useSheetDrag(onClose);
+  useScrollLock();
 
   return (
     <div ref={overlayRef} style={{ ...S.overlay, ...overlayStyle }} onClick={onClose}>

@@ -3,12 +3,14 @@ import { S } from "./styles";
 import { IconX } from "./Icons";
 import MoreMenu from "./MoreMenu";
 import { useSheetDrag } from "./useSheetDrag";
+import { useScrollLock } from "./scrollLock";
 
 export default function AnniversarySheet({ initial, onSave, onClose }) {
   const [date, setDate] = useState(initial || "");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const { handleProps, handleStyle, sheetStyle, overlayStyle, sheetRef, overlayRef } = useSheetDrag(onClose);
+  useScrollLock();
 
   const submit = async (val) => {
     setErr("");

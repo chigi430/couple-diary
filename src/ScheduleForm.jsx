@@ -6,6 +6,7 @@ import { IconX } from "./Icons";
 import { toast } from "./toast";
 import MoreMenu from "./MoreMenu";
 import { useSheetDrag } from "./useSheetDrag";
+import { useScrollLock } from "./scrollLock";
 
 export default function ScheduleForm({ date, existing, meInfo, onSave, onDelete, onClose }) {
   const [title, setTitle] = useState(existing?.title || "");
@@ -52,6 +53,7 @@ export default function ScheduleForm({ date, existing, meInfo, onSave, onDelete,
   };
 
   const { handleProps, handleStyle, sheetStyle, overlayStyle, sheetRef, overlayRef } = useSheetDrag(onClose);
+  useScrollLock();
 
   return (
     <div ref={overlayRef} style={{ ...S.overlay, ...overlayStyle }} onClick={(ev) => { ev.stopPropagation(); onClose(); }}>
