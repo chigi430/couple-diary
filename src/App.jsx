@@ -30,6 +30,7 @@ export default function App() {
   const [people, setPeople] = useState({}); // { userId: profile }
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [introDone, setIntroDone] = useState(false);
+  const finishIntro = useCallback(() => setIntroDone(true), []);
 
   const wantsRecap = new URLSearchParams(window.location.search).get("recap");
   const [tab, setTab] = useState(wantsRecap ? "timeline" : "today");
@@ -152,7 +153,7 @@ export default function App() {
 
   // ── 화면 분기 ──
   // 인트로(스플래시)는 어느 분기가 렌더되든 항상 첫 자식으로 두어 계속 마운트 상태를 유지한다.
-  const intro = !introDone && <Intro hold={!ready} onDone={() => setIntroDone(true)} />;
+  const intro = !introDone && <Intro hold={!ready} onDone={finishIntro} />;
   if (!ready) return <>{intro}<div style={S.center}>불러오는 중…</div></>;
   if (!session) return <>{intro}<Auth /></>;
   if (loadingProfile && !profile) return <>{intro}<div style={S.center}>불러오는 중…</div></>;
@@ -177,7 +178,7 @@ export default function App() {
 
       <header style={S.header}>
         <div style={S.brandRow}>
-          <img src={logoMark} alt="" style={S.brandMark} />
+          <img src={logoMark} alt="" style={S.brandMark} data-brand-mark />
           <div style={{ flex: 1 }}>
             <div style={S.brandName}>오늘의 우리</div>
             <div style={S.brandSub}>함께 쌓아가는 날들</div>
