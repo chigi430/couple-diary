@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { S } from "./styles";
 import SignedImage from "./SignedImage";
 import PhotoLightbox from "./PhotoLightbox";
@@ -16,11 +16,20 @@ export default function PhotoCarousel({ photos, who }) {
   const [ratios, setRatios] = useState({});
   const [lightboxIndex, setLightboxIndex] = useState(null);
 
+  // active가 바뀌면 wrapRatio(=박스 aspect-ratio)가 바뀌어 박스 높이가 변하는데,
+  // 스크롤 이벤트마다(=스와이프 도중에도 계속) 바로 반영해버리면 손가락으로 밀고 있는 중에
+  // 박스 높이가 움직여서 네이티브 스크롤 스냅이랑 싸우다가 절반만 슬라이드된 채 멈추는
+  // 문제가 있었음. 스와이프가 멈춘 뒤(디바운스)로 미뤄서 이 문제를 피한다.
+  const scrollTimer = useRef(null);
   const onScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
-    setActive(Math.round(el.scrollLeft / el.clientWidth));
+    clearTimeout(scrollTimer.current);
+    scrollTimer.current = setTimeout(() => {
+      setActive(Math.round(el.scrollLeft / el.clientWidth));
+    }, 100);
   };
+  useEffect(() => () => clearTimeout(scrollTimer.current), []);
 
   const onImgLoad = (id) => (ev) => {
     const { naturalWidth: w, naturalHeight: h } = ev.target;
