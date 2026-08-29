@@ -1,4 +1,5 @@
-import React, { useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { supabase } from "./supabaseClient";
 import { S } from "./styles";
 import { MOODS, STAMPS } from "./constants";
 import { prettyTime, hasAny } from "./utils";
@@ -19,11 +20,31 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
   const who = (id) => people[id] || { emoji: "🙂", color: "#D98763", display_name: "?" };
   const myInfo = who(me);
 
+  // 자동저장은 칸마다 일어나지만, 상대에게 알림은 "편집을 끝냈을 때"(완료 버튼/시트 닫기) 한 번만 보낸다.
+  const dirtyRef = useRef({ note: false, photo: false });
+  const flushActivity = useCallback(() => {
+    const d = dirtyRef.current;
+    if (!d.note && !d.photo) return;
+    dirtyRef.current = { note: false, photo: false };
+    supabase.rpc("notify_partner_activity", { p_kind: d.note ? "diary" : "photo" });
+  }, []);
+
+  const prevModeRef = useRef(mode);
+  useEffect(() => {
+    if (prevModeRef.current === "edit" && mode !== "edit") flushActivity(); // 수정 → 완료
+    prevModeRef.current = mode;
+  }, [mode, flushActivity]);
+  useEffect(() => () => flushActivity(), [flushActivity]); // 시트 닫힘
+
   const set = async (patch) => {
     const { error } = await saveEntry(date, patch);
     if (error) {
       console.error("저장 실패:", error);
       window.alert("저장하지 못했어요. 잠시 후 다시 시도해주세요.");
+      return;
+    }
+    if ("note" in patch && (patch.note || "").trim() !== "" && (patch.note || "") !== (e.note || "")) {
+      dirtyRef.current.note = true;
     }
   };
 
@@ -47,6 +68,7 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
     setUploading(true);
     try {
       await uploadPhotos(date, files);
+      dirtyRef.current.photo = true;
     } catch (e) {
       console.error("사진 업로드 실패:", e);
       window.alert("사진을 올리지 못했어요. 잠시 후 다시 시도해주세요.");

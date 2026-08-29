@@ -387,25 +387,15 @@ create policy "own push subscriptions" on push_subscriptions
   for all using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 -- ────────────────────────────────────────────────
--- 16) 이벤트 알림 (일기·사진·일정·커플연결 시 상대방에게 푸시)
+-- 16) 이벤트 알림 (상대방에게 푸시)
+--     · 커플연결/위시리스트 완료 = DB 트리거로 발송
+--     · 일기/사진/일정 = 앱에서 저장·완료 버튼 누를 때 notify_partner_activity() 1회 호출
 --     실제 vault 시크릿(edge_function_base_url / edge_function_secret)은
 --     이 파일에 커밋하지 않고 SQL 에디터에서 1회성으로 등록합니다:
 --       select vault.create_secret('https://<project-ref>.supabase.co/functions/v1', 'edge_function_base_url');
 --       select vault.create_secret('<CRON_SECRET 값>', 'edge_function_secret');
 -- ────────────────────────────────────────────────
 create extension if not exists pg_net with schema extensions;
-
--- 알림 도배 방지용 스로틀 로그: 받는 사람 × 카테고리별로 마지막 발송 시각을 기억한다.
--- 'activity'(일기/사진/일정)처럼 짧은 시간에 여러 번 트리거되는 카테고리를 한 번으로 묶는 데 씀
--- (예: 사진 5장 올리면 photos insert 트리거가 5번 → 알림 1번만).
-create table if not exists public.notify_throttle (
-  user_id      uuid not null,
-  category     text not null,
-  last_sent_at timestamptz not null default now(),
-  primary key (user_id, category)
-);
--- RLS 켜고 정책은 두지 않음 → 클라이언트 직접 접근 차단, security definer 함수만 읽고 씀
-alter table public.notify_throttle enable row level security;
 
 -- 예전 5-인자 버전(카테고리 없음)이 남아있으면 6-인자 호출이 모호해지므로 제거
 drop function if exists public.notify_partner(uuid, uuid, text, text, text);
@@ -421,7 +411,6 @@ declare
   base_url   text;
   secret     text;
   pref       boolean;
-  last_at    timestamptz;
 begin
   select id into partner_id from public.profiles
    where couple_id = p_couple_id and id <> p_actor;
@@ -442,19 +431,6 @@ begin
   end if;
   if pref is false then return; end if;
 
-  -- 'activity'는 편집 한 번(일기 저장 + 사진 여러 장)이 트리거를 여러 번 일으키므로
-  -- 같은 사람에게 최근 10분 안에 이미 보냈으면 이번 건은 건너뛴다.
-  if p_category = 'activity' then
-    select last_sent_at into last_at from public.notify_throttle
-     where user_id = partner_id and category = p_category;
-    if last_at is not null and now() - last_at < interval '10 minutes' then
-      return;
-    end if;
-    insert into public.notify_throttle (user_id, category, last_sent_at)
-    values (partner_id, p_category, now())
-    on conflict (user_id, category) do update set last_sent_at = now();
-  end if;
-
   select decrypted_secret into base_url from vault.decrypted_secrets where name = 'edge_function_base_url';
   select decrypted_secret into secret   from vault.decrypted_secrets where name = 'edge_function_secret';
   if base_url is null or secret is null then return; end if;
@@ -467,46 +443,44 @@ begin
 end;
 $$;
 
--- 일기 작성/수정 (note 필드가 실제로 바뀐 경우에만)
-create or replace function public.trg_notify_entry() returns trigger
-language plpgsql security definer set search_path = public as $$
-begin
-  if new.note is null or new.note = '' then return new; end if;
-  if TG_OP = 'UPDATE' and old.note is not distinct from new.note then return new; end if;
-  perform public.notify_partner(new.couple_id, new.note_by,
-    coalesce((select display_name from public.profiles where id = new.note_by), '상대방') || '님이 오늘 일기를 남겼어요',
-    left(new.note, 80), '/?date=' || new.date, 'activity');
-  return new;
-end $$;
-drop trigger if exists on_entry_note_change on entries;
-create trigger on_entry_note_change after insert or update on entries
-  for each row execute function public.trg_notify_entry();
+-- ── 일기/사진/일정 알림은 DB 트리거가 아니라, 앱에서 "저장/완료" 버튼을 눌러
+--    편집이 끝났을 때 아래 RPC 를 1번 호출해서 보낸다.
+--    (예전엔 entries/photos/schedules 행 트리거로 보내서, 사진 5장이면 알림도 5번 갔음)
+drop trigger  if exists on_entry_note_change on entries;
+drop function if exists public.trg_notify_entry();
+drop trigger  if exists on_photo_insert on photos;
+drop function if exists public.trg_notify_photo();
+drop trigger  if exists on_schedule_insert on schedules;
+drop function if exists public.trg_notify_schedule();
+drop table    if exists public.notify_throttle;
 
--- 사진 업로드
-create or replace function public.trg_notify_photo() returns trigger
-language plpgsql security definer set search_path = public as $$
+-- p_kind: 'diary' | 'photo' | 'schedule'
+create or replace function public.notify_partner_activity(p_kind text, p_detail text default '', p_url text default '/')
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  my_couple uuid;
+  my_name   text;
+  msg       text;
 begin
-  perform public.notify_partner(new.couple_id, new.uploaded_by,
-    coalesce((select display_name from public.profiles where id = new.uploaded_by), '상대방') || '님이 사진을 올렸어요',
-    '', '/?date=' || (select date from public.entries where id = new.entry_id), 'activity');
-  return new;
-end $$;
-drop trigger if exists on_photo_insert on photos;
-create trigger on_photo_insert after insert on photos
-  for each row execute function public.trg_notify_photo();
+  select couple_id, display_name into my_couple, my_name
+    from public.profiles where id = auth.uid();
+  if my_couple is null then return; end if;
 
--- 일정 추가
-create or replace function public.trg_notify_schedule() returns trigger
-language plpgsql security definer set search_path = public as $$
-begin
-  perform public.notify_partner(new.couple_id, new.user_id,
-    coalesce((select display_name from public.profiles where id = new.user_id), '상대방') || '님이 일정을 추가했어요: ' || new.title,
-    '', '/?date=' || new.start_date, 'activity');
-  return new;
-end $$;
-drop trigger if exists on_schedule_insert on schedules;
-create trigger on_schedule_insert after insert on schedules
-  for each row execute function public.trg_notify_schedule();
+  msg := case p_kind
+    when 'diary'    then coalesce(my_name, '상대방') || '님이 오늘 일기를 남겼어요'
+    when 'photo'    then coalesce(my_name, '상대방') || '님이 사진을 올렸어요'
+    when 'schedule' then coalesce(my_name, '상대방') || '님이 일정을 추가했어요'
+                         || case when coalesce(p_detail, '') <> '' then ': ' || p_detail else '' end
+    else coalesce(my_name, '상대방') || '님이 오늘을 기록했어요'
+  end;
+
+  perform public.notify_partner(my_couple, auth.uid(), msg, '', coalesce(p_url, '/'), 'activity');
+end;
+$$;
 
 -- join_couple: 참여 성공 시 상대방(초대자)에게 연결 알림 추가
 drop function if exists public.join_couple(text);
