@@ -285,6 +285,21 @@ alter table entries add column if not exists place_lat double precision;
 alter table entries add column if not exists place_lng double precision;
 
 -- ────────────────────────────────────────────────
+-- 13-1) '그날의 이야기'를 사람별로 저장 → 누가 쓴 부분인지 구별
+--       notes = { "<user_id>": "그 사람이 쓴 글", ... }
+--       기존 note/note_by 는 그대로 두고(타임라인·통계·리마인더 등 레거시 소비자용)
+--       저장할 때 합친 문자열을 note 에 미러링한다.
+-- ────────────────────────────────────────────────
+alter table entries add column if not exists notes jsonb not null default '{}'::jsonb;
+
+-- 기존 단일 note → notes 로 1회 백필 (이미 채워진 행은 건드리지 않음)
+update entries
+   set notes = jsonb_build_object(note_by::text, note)
+ where note is not null and btrim(note) <> ''
+   and note_by is not null
+   and (notes is null or notes = '{}'::jsonb);
+
+-- ────────────────────────────────────────────────
 -- 14) 초대코드 만료 (1시간) + 재발급
 -- ────────────────────────────────────────────────
 alter table couples add column if not exists invite_code_expires_at timestamptz not null default (now() + interval '1 hour');

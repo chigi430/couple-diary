@@ -165,7 +165,12 @@ export default function Calendar({ byDate, onOpen, schedules = [], people = {} }
 function collectContributors(entry) {
   if (!entry) return 0;
   const set = new Set();
-  if (entry.note_by) set.add(entry.note_by);
+  const notes = entry.notes && typeof entry.notes === "object" ? entry.notes : null;
+  if (notes) {
+    Object.entries(notes).forEach(([uid, t]) => (t || "").trim() && set.add(uid));
+  } else if (entry.note_by) {
+    set.add(entry.note_by);
+  }
   (entry.photos || []).forEach((p) => p.uploaded_by && set.add(p.uploaded_by));
   return set.size;
 }

@@ -232,6 +232,10 @@ export const S = {
   input: { width: "100%", border: "1px solid var(--border)", background: "var(--soft)", borderRadius: 11, padding: "10px 12px", fontSize: 13.5, color: "var(--text-strong)", outline: "none", transition: "border-color .15s, background .15s" },
   textarea: { width: "100%", border: "1px solid var(--border)", background: "var(--soft)", borderRadius: 11, padding: "10px 12px", fontSize: 13.5, color: "var(--text-strong)", outline: "none", resize: "vertical", lineHeight: 1.6, transition: "border-color .15s, background .15s" },
   noteBy: { display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)", marginTop: 6 },
+  partnerNote: { background: "var(--soft2)", border: "1px solid var(--border)", borderRadius: 11, padding: "9px 11px", marginBottom: 8 },
+  partnerNoteText: { fontSize: 13, color: "var(--text-h2)", lineHeight: 1.6, whiteSpace: "pre-wrap", margin: "4px 0 0" },
+  noteList: { display: "flex", flexDirection: "column", gap: 4 },
+  noteBlock: { marginBottom: 8 },
 
   saveBtn: { width: "100%", marginTop: 15, padding: "11px", border: "none", borderRadius: 12, background: "linear-gradient(135deg,#E0906C 0%, #C96F5B 100%)", color: "#fff", fontSize: 13.5, fontWeight: 800, cursor: "pointer", boxShadow: "0 6px 14px rgba(201,111,91,0.28)" },
   smallActionBtn: { border: "1.5px solid #D98763", background: "var(--card)", color: "var(--text-accent)", fontSize: 12, fontWeight: 700, cursor: "pointer", padding: "6px 12px", borderRadius: 9, whiteSpace: "nowrap" },

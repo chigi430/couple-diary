@@ -19,7 +19,13 @@ export default function Stats({ byDate, people, onOpenRecap }) {
       (e.stamps || []).forEach((s) => {
         stampCounts[s] = (stampCounts[s] || 0) + 1;
       });
-      if (e.note && e.note_by) noteCounts[e.note_by] = (noteCounts[e.note_by] || 0) + 1;
+      if (e.notes && typeof e.notes === "object" && Object.keys(e.notes).length) {
+        Object.entries(e.notes).forEach(([uid, t]) => {
+          if ((t || "").trim()) noteCounts[uid] = (noteCounts[uid] || 0) + 1;
+        });
+      } else if (e.note && e.note_by) {
+        noteCounts[e.note_by] = (noteCounts[e.note_by] || 0) + 1;
+      }
       photoCount += e.photos ? e.photos.length : 0;
     });
 
