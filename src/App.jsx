@@ -13,6 +13,7 @@ import Timeline from "./Timeline";
 import Wishlist from "./Wishlist";
 import DaySheet from "./DaySheet";
 import Settings from "./Settings";
+import ProfileView from "./ProfileView";
 import AnniversarySheet from "./AnniversarySheet";
 import Avatar from "./Avatar";
 import ToastHost from "./ToastHost";
@@ -31,6 +32,8 @@ export default function App() {
   const [autoRecap, setAutoRecap] = useState(() => (wantsRecap ? Date.now() : null));
   const [selected, setSelected] = useState(null);
   const [annEditOpen, setAnnEditOpen] = useState(false);
+  const [profileViewId, setProfileViewId] = useState(null);
+  const [editProfileSignal, setEditProfileSignal] = useState(0);
   const [nowTick, setNowTick] = useState(Date.now());
   // 하단 탭은 살짝만 스크롤해도 바로 숨도록 임계값을 낮게 둠
   const tabbarHidden = useHideOnScroll({ threshold: 6, topGuard: 40 });
@@ -137,6 +140,9 @@ export default function App() {
   const memberCount = Object.keys(people).length;
   const meInfo = people[userId] || profile || {};
   const partnerInfo = Object.values(people).find((p) => p.id !== userId) || null;
+  const profileViewPerson = profileViewId
+    ? people[profileViewId] || (profileViewId === userId ? profile : null)
+    : null;
   const inviteExpiresAt = couple?.invite_code_expires_at ? new Date(couple.invite_code_expires_at).getTime() : null;
   const inviteExpired = inviteExpiresAt !== null && inviteExpiresAt <= nowTick;
   const inviteMinsLeft = inviteExpiresAt !== null ? Math.max(0, Math.ceil((inviteExpiresAt - nowTick) / 60000)) : null;
@@ -153,9 +159,23 @@ export default function App() {
             <div style={S.brandName}>오늘의 우리</div>
             <div style={S.brandSub}>함께 쌓아가는 날들</div>
           </div>
-          <div style={{ ...S.userChip, cursor: "pointer" }} onClick={() => setTab("settings")}>
-            <Avatar person={meInfo} size={24} />
-            <span style={S.userName}>{meInfo.display_name || "나"}</span>
+          <div style={S.headerPeople}>
+            {partnerInfo && (
+              <button
+                style={S.headerAvatarBtn}
+                onClick={() => setProfileViewId(partnerInfo.id)}
+                aria-label={`${partnerInfo.display_name || "상대"} 프로필`}
+              >
+                <Avatar person={partnerInfo} size={31} style={S.headerAvatarImg} />
+              </button>
+            )}
+            <button
+              style={{ ...S.headerAvatarBtn, marginLeft: partnerInfo ? -11 : 0 }}
+              onClick={() => setProfileViewId(userId)}
+              aria-label="내 프로필"
+            >
+              <Avatar person={meInfo} size={31} style={S.headerAvatarImg} />
+            </button>
           </div>
         </div>
       </header>
@@ -230,7 +250,15 @@ export default function App() {
       ) : tab === "wishlist" ? (
         <Wishlist coupleId={coupleId} userId={userId} people={people} />
       ) : (
-        <Settings profile={profile} coupleId={coupleId} onSaved={loadProfile} onSignOut={signOut} />
+        <Settings
+          profile={profile}
+          partner={partnerInfo}
+          coupleId={coupleId}
+          onSaved={loadProfile}
+          onSignOut={signOut}
+          onOpenProfile={setProfileViewId}
+          editSignal={editProfileSignal}
+        />
       )}
 
       <nav
@@ -274,6 +302,28 @@ export default function App() {
           updateSchedule={updateSchedule}
           deleteSchedule={deleteSchedule}
           onClose={() => setSelected(null)}
+        />
+      )}
+
+      {profileViewPerson && (
+        <ProfileView
+          person={profileViewPerson}
+          isMe={profileViewPerson.id === userId}
+          onEditProfile={() => {
+            setProfileViewId(null);
+            setTab("settings");
+            setEditProfileSignal(Date.now());
+          }}
+          onGoTimeline={() => {
+            setProfileViewId(null);
+            setTab("timeline");
+          }}
+          onOpenAnniversary={() => {
+            setProfileViewId(null);
+            setAnnEditOpen(true);
+          }}
+          onRefresh={loadProfile}
+          onClose={() => setProfileViewId(null)}
         />
       )}
 

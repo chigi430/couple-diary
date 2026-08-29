@@ -650,6 +650,57 @@ begin
 end;
 $$;
 
+-- ────────────────────────────────────────────────
+-- 23) 상대방 프로필 보기 (카카오톡 프로필 스타일)
+--     - cover_url: 프로필 배경 사진 (새 버킷 없이 공개 avatars 버킷 재사용)
+--     - status_message: 한 줄 상태 메시지
+--     - birthday: 생일 (daily-check 가 생일 당일 상대에게 축하 알림 발송)
+--     - last_poke_at: "생각나서 콕" 스팸 방지용 마지막 발송 시각
+--     각자 자기 프로필만 수정(기존 "own profile" 정책), 상대 프로필은
+--     "read partner profile" 정책으로 읽기만 되므로 추가 정책 불필요.
+-- ────────────────────────────────────────────────
+alter table profiles add column if not exists cover_url      text;
+alter table profiles add column if not exists status_message text;
+alter table profiles add column if not exists birthday       date;
+alter table profiles add column if not exists last_poke_at   timestamptz;
+
+-- "생각나서 콕" — 상대에게 즉시 푸시. 도배 방지로 15분 쿨다운.
+-- 반환값: 'ok' | 'cooldown' | 'no_partner'
+create or replace function public.poke_partner()
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  my_couple uuid;
+  my_name   text;
+  last_at   timestamptz;
+begin
+  select couple_id, display_name, last_poke_at
+    into my_couple, my_name, last_at
+  from public.profiles where id = auth.uid();
+
+  if my_couple is null then
+    return 'no_partner';
+  end if;
+
+  if last_at is not null and now() - last_at < interval '15 minutes' then
+    return 'cooldown';
+  end if;
+
+  update public.profiles set last_poke_at = now() where id = auth.uid();
+
+  perform public.notify_partner(
+    my_couple, auth.uid(),
+    coalesce(my_name, '상대방') || '님이 생각나서 콕 찔렀어요 💗',
+    '지금 ' || coalesce(my_name, '상대방') || '님이 당신을 떠올리고 있어요',
+    '/', 'activity');
+
+  return 'ok';
+end;
+$$;
+
 -- ============================================================
 --  끝! "Success. No rows returned" 이 뜨면 정상입니다.
 -- ============================================================

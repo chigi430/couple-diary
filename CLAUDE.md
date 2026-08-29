@@ -38,7 +38,8 @@
 - 설정 탭에 버전 확인/업데이트 기능: 현재 버전과 최신 여부 표시, 업데이트 버튼 누르면 그동안의 변경사항(`public/changelog.json` 기반, 날짜별로 묶어서 표시)을 보여주는 확인 시트 → 확인하면 서비스워커/캐시 초기화 후 새로고침
 - 오늘 탭: 오늘 기록 아래로 무한스크롤 피드(지난 기록을 10개씩 페이지네이션해서 이어서 로드). 사진 캐러셀은 활성 슬라이드 기준 앞뒤 1장만 렌더링해 지연 로딩(성능 때문에 필수 — 전체 다 렌더링하면 피드가 무거워짐)
 - 스크롤 다운 시 하단 탭바와 "최근 우리" 스트립이 자동으로 숨고, 스크롤 업하면 다시 나타남 (`useHideOnScroll.js`)
-- 푸시 알림: 상대방 일기/사진/일정 작성 시 즉시 알림, 위시리스트 완료 시 알림, 커플 연결 시 알림, 매일 저녁 9시 미작성 리마인더, 기념일/D-day(매년·100일 단위) 알림, 12월 1일 연말 리캡 알림. 알림 카테고리별(활동/리마인더/기념일/위시리스트) on-off 가능 (자세한 구조는 아래 "푸시 알림 구조" 참고)
+- 푸시 알림: 상대방 일기/사진/일정 작성 시 즉시 알림, 위시리스트 완료 시 알림, 커플 연결 시 알림, 매일 저녁 9시 미작성 리마인더, 기념일/D-day(매년·100일 단위) 알림, 상대 생일 당일 축하 알림, "생각나서 콕" 알림, 12월 1일 연말 리캡 알림. 알림 카테고리별(활동/리마인더/기념일/위시리스트) on-off 가능 (자세한 구조는 아래 "푸시 알림 구조" 참고)
+- 상대방 프로필 보기 (카카오톡 프로필 스타일): 설정 탭의 내 프로필 카드/상대방 카드를 탭하면 `ProfileView.jsx`(전체화면 Portal 오버레이)가 열림 — 배경 사진(없으면 색상 그라데이션) + 큰 아바타(탭하면 원본 확대) + 이름/이모지 + 상태 메시지 + 생일 D-day. 하단 액션: 내 프로필은 [프로필 편집] + `•••`(배경 사진 바꾸기/없애기), 상대 프로필은 [기록 보기](타임라인 탭 이동)/[기념일](`AnniversarySheet`)/[생각나서 콕](`poke_partner` RPC, 15분 쿨다운). 상태 메시지·생일은 `Settings.jsx` 프로필 수정 시트에서 입력. `profiles`에 `cover_url`/`status_message`/`birthday`/`last_poke_at` 컬럼. 배경 사진은 새 버킷 없이 공개 `avatars` 버킷을 `${id}/cover-*` 경로로 재사용.
 - 설정 탭에 "오류 제보" 기능: 설명+사진으로 문제 제보 → 야간 점검 루틴이 판단/수정 → 앱 안에서 상태 확인 + [배포] 승인 (자세한 구조는 아래 "유지보수 자동화" 참고)
 
 ## 디자인 시스템 / UI 패턴
@@ -63,8 +64,8 @@
 - **프론트**: `src/sw.js`(커스텀 서비스워커, push/notificationclick 처리) + `src/push.js`(구독 생성/해제) + `Settings.jsx`의 알림 토글(구독 on-off + 카테고리별 on-off). `vite-plugin-pwa`는 `injectManifest` 전략 사용 중(커스텀 SW를 넣으려면 이 방식이 필요).
 - **구독 저장**: `push_subscriptions` 테이블 (기기당 1행).
 - **카테고리별 on-off**: `profiles.notify_activity` / `notify_reminder` / `notify_anniversary` / `notify_wishlist` 컬럼(기본 true). 커플연결·연말리캡 알림은 토글이 없고 항상 발송(SQL의 `notify_partner()` 함수에서 `p_category = 'always'`로 호출).
-- **발송**: Supabase Edge Function `supabase/functions/send-push` (VAPID 웹푸시, 즉시성 알림용), `supabase/functions/daily-check`(매일 저녁 9시 기념일/리마인더/연말리캡 판단 — 카테고리 컬럼 보고 대상자 필터링).
-- **트리거**: `supabase-setup.sql` 16번 섹션 — 일기/사진/일정/위시리스트 완료, `join_couple()` 성공 시 `pg_net`으로 `send-push` 호출(각각 카테고리 파라미터 전달). 17번 섹션 — `pg_cron`이 매일 21시(KST)에 `daily-check` 호출.
+- **발송**: Supabase Edge Function `supabase/functions/send-push` (VAPID 웹푸시, 즉시성 알림용), `supabase/functions/daily-check`(매일 저녁 9시 기념일/리마인더/연말리캡/**상대 생일 축하** 판단 — 카테고리 컬럼 보고 대상자 필터링. 생일은 `profiles.birthday`의 MM-DD가 오늘과 같으면 당사자 말고 상대에게 발송, `notify_anniversary` 토글 재사용).
+- **트리거**: `supabase-setup.sql` 16번 섹션 — 일기/사진/일정/위시리스트 완료, `join_couple()` 성공 시 `pg_net`으로 `send-push` 호출(각각 카테고리 파라미터 전달). 17번 섹션 — `pg_cron`이 매일 21시(KST)에 `daily-check` 호출. 23번 섹션 — `poke_partner()` RPC("생각나서 콕", 앱에서 직접 호출, 15분 쿨다운, `notify_partner`로 상대에게 즉시 푸시).
 - **비밀값**: VAPID 비밀키·CRON_SECRET은 Supabase Edge Function secrets로, `send-push` 호출 URL/시크릿은 Supabase Vault(`vault.decrypted_secrets`)로 관리. 전부 git에는 안 올라감.
 - Edge Function을 수정했으면 `npx supabase functions deploy <이름> --no-verify-jwt`로 재배포 필요 (수정만으로는 자동 반영 안 됨).
 - 테스트용 "테스트 알림 보내기" 버튼은 배포판에는 넣지 않기로 함(제거 완료). 발송 테스트가 필요하면 `curl`로 `send-push` Edge Function을 직접 호출하거나, `daily-check`를 수동 invoke해서 확인할 것.

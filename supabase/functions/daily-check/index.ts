@@ -32,10 +32,27 @@ Deno.serve(async (req) => {
   for (const couple of couples ?? []) {
     const { data: members } = await supabase
       .from("profiles")
-      .select("id, notify_reminder, notify_anniversary")
+      .select("id, display_name, birthday, notify_reminder, notify_anniversary")
       .eq("couple_id", couple.id);
     const allIds = (members ?? []).map((m) => m.id);
     if (allIds.length === 0) continue;
+
+    // 생일 축하 (당사자 말고 상대에게, notify_anniversary 토글 재사용)
+    const mmdd = todayStr.slice(5);
+    for (const m of members ?? []) {
+      if (!m.birthday || String(m.birthday).slice(5) !== mmdd) continue;
+      const others = (members ?? [])
+        .filter((x) => x.id !== m.id && x.notify_anniversary !== false)
+        .map((x) => x.id);
+      if (others.length) {
+        await sendToUsers(others, {
+          title: "생일 알림 🎂",
+          body: `오늘은 ${m.display_name ?? "상대방"}님의 생일이에요! 축하 인사를 전해보세요.`,
+          url: "/",
+        });
+      }
+      summary[couple.id] = [...(summary[couple.id] || []), "birthday"];
+    }
 
     // 기념일 / D-day (notify_anniversary 켠 사람에게만)
     if (couple.anniversary_date) {

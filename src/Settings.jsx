@@ -17,13 +17,15 @@ import { useBugReports } from "./useBugReports";
 const IS_IOS = /iP(hone|od|ad)/.test(navigator.userAgent);
 const IS_STANDALONE = window.navigator.standalone || window.matchMedia("(display-mode: standalone)").matches;
 
-export default function Settings({ profile, coupleId, onSaved, onSignOut }) {
+export default function Settings({ profile, partner, coupleId, onSaved, onSignOut, onOpenProfile, editSignal }) {
   const fileRef = useRef(null);
   const [editOpen, setEditOpen] = useState(false);
   const [name, setName] = useState(profile?.display_name || "");
   const [emoji, setEmoji] = useState(profile?.emoji || EMOJI_CHOICES[0]);
   const [color, setColor] = useState(profile?.color || COLOR_CHOICES[0]);
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
+  const [statusMsg, setStatusMsg] = useState(profile?.status_message || "");
+  const [birthday, setBirthday] = useState(profile?.birthday || "");
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -81,9 +83,17 @@ export default function Settings({ profile, coupleId, onSaved, onSignOut }) {
     setEmoji(profile?.emoji || EMOJI_CHOICES[0]);
     setColor(profile?.color || COLOR_CHOICES[0]);
     setAvatarUrl(profile?.avatar_url || "");
+    setStatusMsg(profile?.status_message || "");
+    setBirthday(profile?.birthday || "");
     setErr("");
     setEditOpen(true);
   };
+
+  // ProfileView 의 "프로필 편집" 버튼 → 설정 탭으로 온 뒤 수정 시트 열기
+  useEffect(() => {
+    if (editSignal) openEdit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editSignal]);
 
   const toggleDark = () => {
     const next = !darkOn;
@@ -211,7 +221,13 @@ export default function Settings({ profile, coupleId, onSaved, onSignOut }) {
     setBusy(true);
     const { error } = await supabase
       .from("profiles")
-      .update({ display_name: name.trim(), emoji, color })
+      .update({
+        display_name: name.trim(),
+        emoji,
+        color,
+        status_message: statusMsg.trim() || null,
+        birthday: birthday || null,
+      })
       .eq("id", profile.id);
     setBusy(false);
     if (error) {
@@ -241,12 +257,28 @@ export default function Settings({ profile, coupleId, onSaved, onSignOut }) {
           <Avatar person={profile} size={134} />
           <button style={S.profileEditFab} onClick={openEdit} aria-label="프로필 수정"><IconPlus size={16} /></button>
         </div>
-        <div style={S.profileDetailName}>{profile?.display_name || "나"}</div>
-        <div style={S.profileDetailMeta}>
-          <span style={S.profileEmojiTag}>{profile?.emoji}</span>
-          <span style={{ ...S.profileColorTag, background: profile?.color || "#D98763" }} />
-        </div>
+        <button style={S.profileViewLink} onClick={() => onOpenProfile && onOpenProfile(profile.id)}>
+          <div style={S.profileDetailName}>{profile?.display_name || "나"}</div>
+          <div style={S.profileDetailMeta}>
+            <span style={S.profileEmojiTag}>{profile?.emoji}</span>
+            <span style={{ ...S.profileColorTag, background: profile?.color || "#D98763" }} />
+            <span style={S.profileViewHint}>프로필 보기 ›</span>
+          </div>
+        </button>
       </div>
+
+      {partner && (
+        <button style={S.partnerRow} onClick={() => onOpenProfile && onOpenProfile(partner.id)}>
+          <Avatar person={partner} size={44} />
+          <div style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
+            <div style={S.partnerRowName}>{partner.display_name || "상대"}</div>
+            <div style={S.partnerRowSub}>
+              {(partner.status_message || "").trim() || "상대방 프로필 보기"}
+            </div>
+          </div>
+          <span style={S.partnerRowChevron}>›</span>
+        </button>
+      )}
 
       <div style={S.settingsCard}>
         <div style={S.authField}>
@@ -378,6 +410,28 @@ export default function Settings({ profile, coupleId, onSaved, onSignOut }) {
             <div style={S.authField}>
               <label style={S.authLabel}>표시할 이름</label>
               <input style={S.input} value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 창환" />
+            </div>
+
+            <div style={S.authField}>
+              <label style={S.authLabel}>상태 메시지</label>
+              <input
+                style={S.input}
+                value={statusMsg}
+                onChange={(e) => setStatusMsg(e.target.value)}
+                maxLength={60}
+                placeholder="상대에게 보일 한 줄 (예: 요즘 야근 중 🥲)"
+              />
+            </div>
+
+            <div style={S.authField}>
+              <label style={S.authLabel}>생일</label>
+              <input
+                style={{ ...S.input, maxWidth: "100%" }}
+                type="date"
+                value={birthday || ""}
+                onChange={(e) => setBirthday(e.target.value)}
+              />
+              <div style={S.authSub}>생일 당일에 상대에게 축하 알림이 가요.</div>
             </div>
 
             <div style={S.authField}>
