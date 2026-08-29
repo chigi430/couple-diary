@@ -33,9 +33,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    await sendToUsers(user_ids, { title, body, url });
+    const results = await sendToUsers(user_ids, { title, body, url });
 
-    return new Response(JSON.stringify({ ok: true }), {
+    return new Response(JSON.stringify({ ok: true, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

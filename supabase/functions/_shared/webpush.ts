@@ -18,19 +18,34 @@ export async function sendToUsers(userIds: string[], payload: { title: string; b
   const { data: subs, error } = await supabase.from("push_subscriptions").select("*").in("user_id", userIds);
   if (error) throw error;
 
-  await Promise.allSettled(
+  const results = await Promise.all(
     (subs || []).map(async (sub) => {
+      const host = (() => {
+        try {
+          return new URL(sub.endpoint).host;
+        } catch {
+          return "?";
+        }
+      })();
       try {
         await webpush.sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth_key } },
           JSON.stringify(payload)
         );
+        return { user_id: sub.user_id, host, ok: true };
       } catch (err) {
-        if (err?.statusCode === 404 || err?.statusCode === 410) {
+        const statusCode = err?.statusCode ?? null;
+        const bodyText = typeof err?.body === "string" ? err.body.slice(0, 200) : String(err).slice(0, 200);
+        console.error("webpush failed", { host, statusCode, body: bodyText });
+        let pruned = false;
+        if (statusCode === 404 || statusCode === 410) {
           await supabase.from("push_subscriptions").delete().eq("id", sub.id);
+          pruned = true;
         }
-        throw err;
+        return { user_id: sub.user_id, host, ok: false, statusCode, error: bodyText, pruned };
       }
     })
   );
+
+  return results;
 }
