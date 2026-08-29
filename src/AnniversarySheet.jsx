@@ -8,7 +8,7 @@ export default function AnniversarySheet({ initial, onSave, onClose }) {
   const [date, setDate] = useState(initial || "");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
-  const { handleProps, handleStyle, sheetStyle, overlayStyle } = useSheetDrag(onClose);
+  const { handleProps, handleStyle, sheetStyle, overlayStyle, sheetRef, overlayRef } = useSheetDrag(onClose);
 
   const submit = async (val) => {
     setErr("");
@@ -28,8 +28,8 @@ export default function AnniversarySheet({ initial, onSave, onClose }) {
     : [{ label: "저장", onClick: () => submit(date || null) }];
 
   return (
-    <div style={{ ...S.overlay, ...overlayStyle }} onClick={onClose}>
-      <div style={{ ...S.sheetCompact, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
+    <div ref={overlayRef} style={{ ...S.overlay, ...overlayStyle }} onClick={onClose}>
+      <div ref={sheetRef} style={{ ...S.sheetCompact, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
         <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
           <div style={S.sheetHandle} />
         </div>

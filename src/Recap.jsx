@@ -147,11 +147,11 @@ export default function Recap({ byDate, people, onClose }) {
     },
   ];
 
-  const { handleProps, handleStyle, sheetStyle, overlayStyle } = useSheetDrag(onClose);
+  const { handleProps, handleStyle, sheetStyle, overlayStyle, sheetRef, overlayRef } = useSheetDrag(onClose);
 
   return (
-    <div style={{ ...S.overlay, ...overlayStyle }} onClick={onClose}>
-      <div style={{ ...S.recapSheet, ...sheetStyle }} onClick={(e) => e.stopPropagation()}>
+    <div ref={overlayRef} style={{ ...S.overlay, ...overlayStyle }} onClick={onClose}>
+      <div ref={sheetRef} style={{ ...S.recapSheet, ...sheetStyle }} onClick={(e) => e.stopPropagation()}>
         <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
           <div style={S.sheetHandle} />
         </div>

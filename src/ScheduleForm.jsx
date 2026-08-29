@@ -51,11 +51,11 @@ export default function ScheduleForm({ date, existing, meInfo, onSave, onDelete,
     toast("일정을 삭제했어요");
   };
 
-  const { handleProps, handleStyle, sheetStyle, overlayStyle } = useSheetDrag(onClose);
+  const { handleProps, handleStyle, sheetStyle, overlayStyle, sheetRef, overlayRef } = useSheetDrag(onClose);
 
   return (
-    <div style={{ ...S.overlay, ...overlayStyle }} onClick={(ev) => { ev.stopPropagation(); onClose(); }}>
-      <div style={{ ...S.sheet, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
+    <div ref={overlayRef} style={{ ...S.overlay, ...overlayStyle }} onClick={(ev) => { ev.stopPropagation(); onClose(); }}>
+      <div ref={sheetRef} style={{ ...S.sheet, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
         <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
           <div style={S.sheetHandle} />
         </div>

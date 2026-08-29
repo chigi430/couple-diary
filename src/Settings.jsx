@@ -77,7 +77,7 @@ export default function Settings({ profile, partner, coupleId, onSaved, onSignOu
       .catch(() => setIsLatest(null));
   }, []);
 
-  const { handleProps, handleStyle, sheetStyle, overlayStyle } = useSheetDrag(() => setEditOpen(false));
+  const { handleProps, handleStyle, sheetStyle, overlayStyle, sheetRef, overlayRef } = useSheetDrag(() => setEditOpen(false));
 
   const openEdit = () => {
     setName(profile?.display_name || "");
@@ -394,8 +394,8 @@ export default function Settings({ profile, partner, coupleId, onSaved, onSignOu
       </div>
 
       {editOpen && (
-        <div style={{ ...S.overlay, ...overlayStyle }} onClick={() => setEditOpen(false)}>
-          <div style={{ ...S.sheet, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
+        <div ref={overlayRef} style={{ ...S.overlay, ...overlayStyle }} onClick={() => setEditOpen(false)}>
+          <div ref={sheetRef} style={{ ...S.sheet, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
             <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
               <div style={S.sheetHandle} />
             </div>

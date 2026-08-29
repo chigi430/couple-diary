@@ -39,11 +39,11 @@ export default function DaySheet({
 
   const who = (id) => people[id] || { emoji: "🙂", color: "#D98763", display_name: "?" };
   const meInfo = who(me);
-  const { handleProps, handleStyle, sheetStyle, overlayStyle } = useSheetDrag(onClose);
+  const { handleProps, handleStyle, sheetStyle, overlayStyle, sheetRef, overlayRef } = useSheetDrag(onClose);
 
   return (
-    <div style={{ ...S.overlay, ...overlayStyle }} onClick={onClose}>
-      <div style={{ ...S.sheet, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
+    <div ref={overlayRef} style={{ ...S.overlay, ...overlayStyle }} onClick={onClose}>
+      <div ref={sheetRef} style={{ ...S.sheet, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
         <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
           <div style={S.sheetHandle} />
         </div>

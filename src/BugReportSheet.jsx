@@ -25,7 +25,7 @@ const MAINTAINER_USER_ID = import.meta.env.VITE_MAINTAINER_USER_ID;
 // ("tried to subscribe multiple times"), 그러면 에러 경계가 없어서 화면 전체가 하얗게 죽는다.
 export default function BugReportSheet({ userId, reports, addReport, deployReport, onClose }) {
   const isMaintainer = userId === MAINTAINER_USER_ID;
-  const { handleProps, handleStyle, sheetStyle, overlayStyle } = useSheetDrag(onClose);
+  const { handleProps, handleStyle, sheetStyle, overlayStyle, sheetRef, overlayRef } = useSheetDrag(onClose);
   const fileRef = useRef(null);
   const [description, setDescription] = useState("");
   const [photoFile, setPhotoFile] = useState(null);
@@ -79,8 +79,8 @@ export default function BugReportSheet({ userId, reports, addReport, deployRepor
   };
 
   return (
-    <div style={{ ...S.overlay, ...overlayStyle }} onClick={onClose}>
-      <div style={{ ...S.sheet, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
+    <div ref={overlayRef} style={{ ...S.overlay, ...overlayStyle }} onClick={onClose}>
+      <div ref={sheetRef} style={{ ...S.sheet, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
         <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
           <div style={S.sheetHandle} />
         </div>

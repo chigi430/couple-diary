@@ -6,11 +6,11 @@ import { useSheetDrag } from "./useSheetDrag";
 // 위험하거나 되돌리기 어려운 액션을 실행하기 전에 확인받는 공용 시트.
 // window.confirm/alert 대신 앱 디자인에 맞는 모달로 통일하기 위해 사용.
 export default function ConfirmSheet({ title, children, confirmLabel = "확인", danger = false, onConfirm, onClose }) {
-  const { handleProps, handleStyle, sheetStyle, overlayStyle } = useSheetDrag(onClose);
+  const { handleProps, handleStyle, sheetStyle, overlayStyle, sheetRef, overlayRef } = useSheetDrag(onClose);
 
   return (
-    <div style={{ ...S.overlay, ...overlayStyle }} onClick={onClose}>
-      <div style={{ ...S.sheetCompact, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
+    <div ref={overlayRef} style={{ ...S.overlay, ...overlayStyle }} onClick={onClose}>
+      <div ref={sheetRef} style={{ ...S.sheetCompact, ...sheetStyle }} onClick={(ev) => ev.stopPropagation()}>
         <div style={{ ...S.sheetHandleZone, ...handleStyle }} {...handleProps}>
           <div style={S.sheetHandle} />
         </div>
