@@ -63,7 +63,8 @@
 ## 푸시 알림 구조
 
 - **프론트**: `src/sw.js`(커스텀 서비스워커, push/notificationclick 처리) + `src/push.js`(구독 생성/해제) + `Settings.jsx`의 알림 토글(구독 on-off + 카테고리별 on-off). `vite-plugin-pwa`는 `injectManifest` 전략 사용 중(커스텀 SW를 넣으려면 이 방식이 필요).
-- **구독 저장**: `push_subscriptions` 테이블 (기기당 1행).
+- **구독 저장**: `push_subscriptions` 테이블 (기기당 1행). 푸시 서비스가 구독을 만료시키면(FCM/APNs가 410 반환) `webpush.ts`가 그 행을 자동 삭제함.
+- **구독 자동 복구**: 일부 기기(특히 갤럭시 배터리 최적화)에서 웹푸시 구독이 30분~1시간 만에 만료되는 문제 때문에 — `push.js`의 `ensurePushHealthy(userId)`를 `App.jsx`가 앱 열 때 + 포그라운드 복귀(`visibilitychange`) 때마다 호출: 브라우저 구독이 살아있으면 DB 행만 갱신, 사라졌으면(권한 granted + 로컬 `push-enabled` 플래그 or 기존 DB 행 존재 시) 조용히 재구독. `sw.js`의 `pushsubscriptionchange` 핸들러도 즉시 재구독 후 클라이언트에 메시지 → `ensurePushHealthy` 재실행. `subscribePush` 성공 시 `localStorage['push-enabled']='1'`, `unsubscribePush` 시 제거.
 - **카테고리별 on-off**: `profiles.notify_activity` / `notify_reminder` / `notify_anniversary` / `notify_wishlist` / `notify_poke` 컬럼(기본 true). 커플연결·연말리캡 알림은 토글이 없고 항상 발송(SQL의 `notify_partner()` 함수에서 `p_category = 'always'`로 호출).
 - **발송**: Supabase Edge Function `supabase/functions/send-push` (VAPID 웹푸시, 즉시성 알림용), `supabase/functions/daily-check`(매일 저녁 9시 기념일/리마인더/연말리캡/**상대 생일 축하** 판단 — 카테고리 컬럼 보고 대상자 필터링. 생일은 `profiles.birthday`의 MM-DD가 오늘과 같으면 당사자 말고 상대에게 발송, `notify_anniversary` 토글 재사용). `webpush.ts`의 `sendToUsers`는 구독별 결과 배열(host/ok/statusCode/error/pruned)을 반환하고 실패는 `console.error` — `send-push` 응답 본문에 담겨 `net._http_response`로 확인 가능(특정 기기가 왜 못 받는지 진단용).
 - **일기/사진/일정 알림 = 앱에서 "완료" 시 1회 호출** (DB 행 트리거 아님): 예전엔 `entries`/`photos`/`schedules` 행 트리거라 사진 5장이면 알림도 5번 갔음. 지금은 `DiaryTab.jsx`가 편집 중 변경을 `dirtyRef`에 모아뒀다가 **"완료" 버튼 누르거나 시트 닫힐 때** `notify_partner_activity('diary'|'photo')`를 1번 호출, `ScheduleForm.jsx`는 **새 일정 "저장"** 시 `notify_partner_activity('schedule', 제목)` 호출. 이 RPC가 `auth.uid()`로 커플/이름 찾아 메시지 만들고 `notify_partner(..., 'activity')`로 넘김. 일정 수정·기분/스탬프 변경·사진 삭제는 알림 없음(기존 동작 유지). 상대 화면 실시간 반영은 트리거와 무관하게 `useEntries`의 realtime 구독이 계속 처리.

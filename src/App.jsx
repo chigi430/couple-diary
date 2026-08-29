@@ -5,6 +5,7 @@ import { anniversaryInfo } from "./utils";
 import { useEntries } from "./useEntries";
 import { useSchedules } from "./useSchedules";
 import { useHideOnScroll } from "./useHideOnScroll";
+import { ensurePushHealthy } from "./push";
 import Auth from "./Auth";
 import CoupleGate from "./CoupleGate";
 import Today from "./Today";
@@ -104,6 +105,22 @@ export default function App() {
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
+
+  // 앱을 열 때 / 다시 포그라운드로 올 때마다 푸시 구독이 살아있는지 확인하고,
+  // 만료됐으면(갤럭시 배터리 최적화 등) 조용히 다시 등록한다.
+  useEffect(() => {
+    const uid = session?.user?.id;
+    if (!uid) return;
+    ensurePushHealthy(uid);
+    const onVisible = () => document.visibilityState === "visible" && ensurePushHealthy(uid);
+    const onSwMessage = (e) => e.data?.type === "push-subscription-changed" && ensurePushHealthy(uid);
+    document.addEventListener("visibilitychange", onVisible);
+    navigator.serviceWorker?.addEventListener("message", onSwMessage);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      navigator.serviceWorker?.removeEventListener("message", onSwMessage);
+    };
+  }, [session?.user?.id]);
 
   const coupleId = couple?.id || null;
   const userId = session?.user?.id || null;
