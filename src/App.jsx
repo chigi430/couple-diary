@@ -171,8 +171,9 @@ export default function App() {
   const inviteMinsLeft = inviteExpiresAt !== null ? Math.max(0, Math.ceil((inviteExpiresAt - nowTick) / 60000)) : null;
 
   return (
-    <div style={S.root}>
+    <>
       {intro}
+      <div style={S.root}>
       <style>{css}</style>
       <ToastHost />
 
@@ -360,6 +361,7 @@ export default function App() {
           onClose={() => setAnnEditOpen(false)}
         />
       )}
-    </div>
+      </div>
+    </>
   );
 }
