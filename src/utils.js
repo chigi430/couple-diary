@@ -94,7 +94,12 @@ export async function compressImage(file, maxDim = 1280, quality = 0.8) {
     canvas.width = width;
     canvas.height = height;
     canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-    const blob = await new Promise((res) => canvas.toBlob(res, "image/jpeg", quality));
+    // WebP가 같은 화질에 JPEG보다 30%가량 작다. 아주 오래된 브라우저는 인코딩을 못 해
+    // null이나 다른 타입을 주므로 그때만 JPEG로 폴백.
+    const toBlob = (type) => new Promise((res) => canvas.toBlob(res, type, quality));
+    let blob = await toBlob("image/webp");
+    if (blob && blob.type === "image/webp") return { blob, ext: "webp" };
+    blob = await toBlob("image/jpeg");
     if (!blob) return { blob: file, ext: extOf(file.name) };
     return { blob, ext: "jpg" };
   } catch {

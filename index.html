@@ -3,6 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <!-- 사진·API가 전부 이 호스트라, 앱 켜자마자 연결을 미리 맺어둔다 (Vite가 빌드 때 실제 URL로 치환) -->
+    <link rel="preconnect" href="%VITE_SUPABASE_URL%" />
+    <link rel="dns-prefetch" href="%VITE_SUPABASE_URL%" />
     <meta name="theme-color" content="#D98763" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#141110" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

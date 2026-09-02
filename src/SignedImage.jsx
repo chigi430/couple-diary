@@ -11,10 +11,12 @@ import { supabase } from "./supabaseClient";
 //  3) URL은 발급 후 1시간이 지나면 서버에서 만료돼 더 이상 안 열리므로, 만료 5분 전부터는
 //     캐시를 못 믿는 걸로 치고 새로 발급받는다 — 안 그러면 앱을 오래 켜둘 때 사진이
 //     간헐적으로 나오다가(발급 직후) 말아버리는(만료 후에도 캐시값을 계속 씀) 문제가 생김.
-const SIGNED_URL_TTL_SEC = 3600;
-const REFRESH_MARGIN_MS = 5 * 60 * 1000;
+// 7일짜리로 발급 — 그동안 같은 URL이 재사용되므로 브라우저가 사진 바이트 자체를
+// 디스크에 캐시해서 재방문 시 네트워크 없이 즉시 뜬다 (스토리지 객체엔 1년 cache-control).
+const SIGNED_URL_TTL_SEC = 7 * 24 * 3600;
+const REFRESH_MARGIN_MS = 60 * 60 * 1000; // 만료 1시간 전부터 새로 발급
 const LS_PREFIX = "su:";
-const MAX_LS_ENTRIES = 400;
+const MAX_LS_ENTRIES = 800;
 
 const mem = new Map(); // path -> { url, expiresAt }
 

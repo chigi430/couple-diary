@@ -94,7 +94,11 @@ export function useEntries(coupleId, userId) {
         const path = `${coupleId}/${entryId}/${uuid()}.${ext}`;
         const { error: upErr } = await supabase.storage
           .from("photos")
-          .upload(path, blob, { contentType: blob.type || "image/jpeg", upsert: false });
+          .upload(path, blob, {
+            contentType: blob.type || "image/jpeg",
+            upsert: false,
+            cacheControl: "31536000", // 사진은 안 바뀌므로 1년 — 서명 URL(7일) 동안 브라우저가 재다운로드 안 함
+          });
         if (upErr) {
           console.error("사진 업로드 실패:", upErr.message);
           failCount++;
