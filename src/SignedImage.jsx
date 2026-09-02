@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { supabase } from "./supabaseClient";
 
 // signed URL 캐시 (같은 사진을 매번 다시 요청하지 않도록).
@@ -196,6 +196,8 @@ export default function SignedImage({ path, style, alt = "", onLoad, onClick, lo
   // 발급이 끝내 실패하면(끊긴 네트워크 등) 잠시 뒤 한 번 더 — 안 그러면 다른 화면에
   // 갔다 돌아올 때까지 회색 자리만 남는다.
   const [attempt, setAttempt] = useState(0);
+  const [state, setState] = useState("loading"); // loading | done | error
+  const imgRef = useRef(null);
 
   useEffect(() => {
     let alive = true;
@@ -220,15 +222,37 @@ export default function SignedImage({ path, style, alt = "", onLoad, onClick, lo
     };
   }, [path, attempt]);
 
-  useEffect(() => setAttempt(0), [path]);
+  useEffect(() => {
+    setAttempt(0);
+    setState("loading");
+  }, [path]);
 
-  if (!url) return <div style={{ ...style, background: "#F4EAE3" }} />;
+  // 브라우저 캐시에 이미 있으면 onLoad가 안 뜰 수 있으니 마운트 직후 한 번 확인
+  useEffect(() => {
+    const el = imgRef.current;
+    if (el && el.complete && el.naturalWidth > 0) {
+      setState("done");
+      onLoad && onLoad({ target: el });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [url]);
+
+  // URL을 아직 못 받았을 때 — 자리표시(스켈레톤)
+  if (!url) return <div className="img-skel" style={style} aria-hidden />;
+
   return (
     <img
+      ref={imgRef}
       src={url}
       alt={alt}
+      // 이미지 바이트가 그려지기 전엔 <img> 배경으로 스켈레톤이 비치고, 다 받으면 페이드인
+      className={state === "done" ? "img-in" : state === "loading" ? "img-skel" : undefined}
       style={style}
-      onLoad={onLoad}
+      onLoad={(e) => {
+        setState("done");
+        onLoad && onLoad(e);
+      }}
+      onError={() => setState("error")}
       onClick={onClick}
       loading={loading}
       decoding="async"

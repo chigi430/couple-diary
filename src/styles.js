@@ -22,6 +22,8 @@ export const css = `
   --text-chip: #8A756C;
   --tabbar-bg: rgba(255,255,255,0.92);
   --tabon-bg: linear-gradient(135deg,#FBE0D4,#F7D0BF);
+  --skel-base: #EFE3DA;
+  --skel-hi: #F9F1EB;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -46,6 +48,8 @@ export const css = `
     --text-chip: #B39C8C;
     --tabbar-bg: rgba(20,17,16,0.85);
     --tabon-bg: linear-gradient(135deg,#3D2E22,#332619);
+    --skel-base: #241F1B;
+    --skel-hi: #2F2925;
   }
 }
 :root[data-theme="dark"] {
@@ -70,6 +74,8 @@ export const css = `
   --text-chip: #B39C8C;
   --tabbar-bg: rgba(20,17,16,0.85);
   --tabon-bg: linear-gradient(135deg,#3D2E22,#332619);
+  --skel-base: #241F1B;
+  --skel-hi: #2F2925;
 }
 @keyframes sheetUp { from { transform: translateY(24px); opacity:0 } to { transform: translateY(0); opacity:1 } }
 @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
@@ -77,6 +83,19 @@ export const css = `
 @keyframes slideUpFade { from { opacity:0; transform: translateY(16px) } to { opacity:1; transform: translateY(0) } }
 @keyframes toastIn { from { opacity:0; transform: translate(-50%, -14px) } to { opacity:1; transform: translate(-50%, 0) } }
 @keyframes listPop { from { opacity:0; transform: translateY(8px) } to { opacity:1; transform: none } }
+@keyframes imgShimmer { from { background-position: 200% 0 } to { background-position: -200% 0 } }
+/* 사진 로딩 중 자리표시(스켈레톤). <img>가 아직 안 그려졌을 때 배경으로 은은하게 흐름 */
+.img-skel {
+  background-color: var(--skel-base);
+  background-image: linear-gradient(100deg, var(--skel-base) 30%, var(--skel-hi) 50%, var(--skel-base) 70%);
+  background-size: 200% 100%;
+  animation: imgShimmer 1.4s ease-in-out infinite;
+}
+.img-in { animation: fadeIn .28s ease both; }
+@media (prefers-reduced-motion: reduce) {
+  .img-skel { animation: none }
+  .img-in { animation: none }
+}
 * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
 html, body { margin:0; padding:0; background: var(--bg1); }
 input, textarea, button { font-family: inherit; }
