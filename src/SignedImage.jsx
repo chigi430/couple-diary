@@ -180,6 +180,12 @@ export function getSignedUrl(path) {
   });
 }
 
+// 곧 보게 될 사진들의 서명 URL을 미리 한 배치로 받아둔다 (상세보기 진입 등).
+// 이미 캐시에 있으면 아무 일도 안 함.
+export function prefetchSignedUrls(paths) {
+  for (const p of paths || []) if (p) getSignedUrl(p);
+}
+
 // 시작 직후 한가할 때 만료된 캐시 정리
 if (typeof window !== "undefined") {
   setTimeout(() => pruneLs(), 3000);

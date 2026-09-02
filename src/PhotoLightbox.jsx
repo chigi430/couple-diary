@@ -1,7 +1,7 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { S } from "./styles";
-import SignedImage, { getSignedUrl } from "./SignedImage";
+import SignedImage, { getSignedUrl, prefetchSignedUrls } from "./SignedImage";
 import { IconX, IconShare } from "./Icons";
 import { toast } from "./toast";
 import { useScrollLock } from "./scrollLock";
@@ -21,6 +21,14 @@ export default function PhotoLightbox({ photos, initialIndex, onClose }) {
   const pointers = useRef(new Map());
   const gesture = useRef({ mode: "idle" });
   const lastTap = useRef({ time: 0, x: 0, y: 0 });
+
+  // 진입하자마자 이 묶음 전체의 서명 URL을 한 배치로 받아둔다 (넘길 때마다 왕복하지 않도록).
+  useEffect(() => {
+    prefetchSignedUrls(photos.map((p) => p.storage_path));
+  }, [photos]);
+
+  // 현재 사진 양옆(±2)을 실제로 내려받아 브라우저 캐시에 넣어둠 — 스와이프 시 즉시 표시.
+  const neighbors = [index - 2, index - 1, index + 1, index + 2].filter((i) => i >= 0 && i < photos.length);
 
   const resetZoom = () => setXf({ scale: 1, tx: 0, ty: 0 });
 
@@ -167,6 +175,13 @@ export default function PhotoLightbox({ photos, initialIndex, onClose }) {
             transition: gesture.current.mode === "idle" ? "transform .2s ease" : "none",
           }}
         />
+      </div>
+
+      {/* 양옆 사진 프리로더 — 화면엔 안 보이지만 브라우저가 받아둔다 */}
+      <div aria-hidden style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", opacity: 0, pointerEvents: "none" }}>
+        {neighbors.map((i) => (
+          <SignedImage key={photos[i].id} path={photos[i].storage_path} loading="eager" />
+        ))}
       </div>
     </div>,
     document.body

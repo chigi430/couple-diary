@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { S } from "./styles";
-import SignedImage from "./SignedImage";
+import SignedImage, { prefetchSignedUrls } from "./SignedImage";
 import PhotoLightbox from "./PhotoLightbox";
 import Avatar from "./Avatar";
 
@@ -20,6 +20,12 @@ export default function PhotoCarousel({ photos, who }) {
   // 스크롤 이벤트마다(=스와이프 도중에도 계속) 바로 반영해버리면 손가락으로 밀고 있는 중에
   // 박스 높이가 움직여서 네이티브 스크롤 스냅이랑 싸우다가 절반만 슬라이드된 채 멈추는
   // 문제가 있었음. 스와이프가 멈춘 뒤(디바운스)로 미뤄서 이 문제를 피한다.
+  // 이 묶음의 서명 URL을 한 배치로 미리 받아둔다 (바이트가 아니라 URL만 — 가벼움).
+  // 슬라이드를 넘길 때 사진마다 서명 요청 왕복이 붙던 걸 없앤다.
+  useEffect(() => {
+    prefetchSignedUrls(photos.map((p) => p.storage_path));
+  }, [photos]);
+
   const scrollTimer = useRef(null);
   const onScroll = () => {
     const el = scrollRef.current;
@@ -46,8 +52,9 @@ export default function PhotoCarousel({ photos, who }) {
         <div ref={scrollRef} className="no-scrollbar" style={S.carouselScroll} onScroll={onScroll}>
           {photos.map((p, i) => (
             <div key={p.id} style={S.carouselSlide}>
-              {/* 피드에 카드가 여러 장 뜰 때 안 보이는 슬라이드까지 한꺼번에 다운로드되지 않도록, 현재 슬라이드 앞뒤 1장만 로드 */}
-              {Math.abs(i - active) <= 1 && (
+              {/* 피드에 카드가 여러 장 뜰 때 안 보이는 슬라이드까지 한꺼번에 다운로드되지 않도록 창을 두되,
+                  넘길 때 바로 뜨도록 앞뒤 2장까지는 미리 받는다 */}
+              {Math.abs(i - active) <= 2 && (
                 <SignedImage
                   path={p.storage_path}
                   style={S.carouselImg}
