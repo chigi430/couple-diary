@@ -38,7 +38,12 @@ export default defineConfig({
       strategies: "injectManifest",
       srcDir: "src",
       filename: "sw.js",
-      injectManifest: {},
+      injectManifest: {
+        // heic2any(1.3MB)는 아이폰 HEIC 사진을 올릴 때만 동적 import되는데, 프리캐시에
+        // 들어가 있으면 배포할 때마다 모든 기기가 쓰지도 않을 1.3MB를 미리 받는다.
+        // 필요할 때 네트워크에서 받게 두는 편이 훨씬 싸다 (업로드는 어차피 온라인 전용).
+        globIgnores: ["**/heic2any-*.js"],
+      },
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "favicon-16.png", "favicon-32.png", "apple-touch-icon.png"],
       devOptions: {

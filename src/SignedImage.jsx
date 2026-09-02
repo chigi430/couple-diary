@@ -16,7 +16,8 @@ import { supabase } from "./supabaseClient";
 const SIGNED_URL_TTL_SEC = 7 * 24 * 3600;
 const REFRESH_MARGIN_MS = 60 * 60 * 1000; // 만료 1시간 전부터 새로 발급
 const LS_PREFIX = "su:";
-const MAX_LS_ENTRIES = 800;
+// auth 세션도 같은 localStorage에 사니 넉넉히 잡을 이유가 없다 (300개 ≈ 150KB).
+const MAX_LS_ENTRIES = 300;
 
 const mem = new Map(); // path -> { url, expiresAt }
 
@@ -100,9 +101,57 @@ function store(path, url) {
   lsSet(path, entry);
 }
 
+// 로그아웃 시 호출 — 서명 URL은 7일간 유효하므로 기기에 남겨두면
+// 다음 사용자가 이전 사용자의 사진을 열어볼 수 있다.
+export function clearSignedUrlCache() {
+  mem.clear();
+  try {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.indexOf(LS_PREFIX) === 0) keys.push(key);
+    }
+    for (const key of keys) localStorage.removeItem(key);
+  } catch {
+    /* ignore */
+  }
+}
+
 // ── 요청 배칭 ──
+// 한 틱에 모인 요청을 CHUNK개씩 나눠 보낸다. 한 덩어리로 몰아 보내면 화면에 사진이
+// 많을 때 요청 하나가 실패했을 때 화면 전체가 빈 상태가 되므로, 나눠서 피해를 줄이고
+// 실패한 덩어리는 한 번 더 시도한다.
+const CHUNK = 100;
+const RETRY_DELAY_MS = 800;
+
 let queue = new Map(); // path -> [resolve, ...]
 let flushTimer = null;
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// 성공하면 path -> url Map, 실패하면 throw
+async function signChunk(paths) {
+  if (paths.length === 1) {
+    const { data, error } = await supabase.storage.from("photos").createSignedUrl(paths[0], SIGNED_URL_TTL_SEC);
+    if (error || !data?.signedUrl) throw error || new Error("sign failed");
+    return new Map([[paths[0], data.signedUrl]]);
+  }
+  const { data, error } = await supabase.storage.from("photos").createSignedUrls(paths, SIGNED_URL_TTL_SEC);
+  if (error || !data) throw error || new Error("sign failed");
+  return new Map(data.map((d) => [d.path, d.signedUrl]));
+}
+
+async function runChunk(paths, settle) {
+  let got = null;
+  for (let attempt = 0; attempt < 2 && !got; attempt++) {
+    try {
+      got = await signChunk(paths);
+    } catch {
+      if (attempt === 0) await sleep(RETRY_DELAY_MS);
+    }
+  }
+  for (const p of paths) settle(p, got ? got.get(p) : null);
+}
 
 function flush() {
   flushTimer = null;
@@ -116,29 +165,9 @@ function flush() {
     for (const resolve of batch.get(path) || []) resolve(url || null);
   };
 
-  if (paths.length === 1) {
-    supabase.storage
-      .from("photos")
-      .createSignedUrl(paths[0], SIGNED_URL_TTL_SEC)
-      .then(({ data }) => settle(paths[0], data?.signedUrl))
-      .catch(() => settle(paths[0], null));
-    return;
+  for (let i = 0; i < paths.length; i += CHUNK) {
+    runChunk(paths.slice(i, i + CHUNK), settle);
   }
-
-  supabase.storage
-    .from("photos")
-    .createSignedUrls(paths, SIGNED_URL_TTL_SEC)
-    .then(({ data, error }) => {
-      if (error || !data) {
-        for (const p of paths) settle(p, null);
-        return;
-      }
-      const got = new Map(data.map((d) => [d.path, d.signedUrl]));
-      for (const p of paths) settle(p, got.get(p) || null);
-    })
-    .catch(() => {
-      for (const p of paths) settle(p, null);
-    });
 }
 
 export function getSignedUrl(path) {
@@ -158,9 +187,13 @@ if (typeof window !== "undefined") {
 
 export default function SignedImage({ path, style, alt = "", onLoad, onClick, loading = "lazy" }) {
   const [url, setUrl] = useState(() => (path ? freshCached(path) : null));
+  // 발급이 끝내 실패하면(끊긴 네트워크 등) 잠시 뒤 한 번 더 — 안 그러면 다른 화면에
+  // 갔다 돌아올 때까지 회색 자리만 남는다.
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let alive = true;
+    let retryTimer = null;
     if (!path) {
       setUrl(null);
       return;
@@ -171,12 +204,17 @@ export default function SignedImage({ path, style, alt = "", onLoad, onClick, lo
       return;
     }
     getSignedUrl(path).then((signedUrl) => {
-      if (alive && signedUrl) setUrl(signedUrl);
+      if (!alive) return;
+      if (signedUrl) setUrl(signedUrl);
+      else if (attempt < 1) retryTimer = setTimeout(() => setAttempt((a) => a + 1), 3000);
     });
     return () => {
       alive = false;
+      clearTimeout(retryTimer);
     };
-  }, [path]);
+  }, [path, attempt]);
+
+  useEffect(() => setAttempt(0), [path]);
 
   if (!url) return <div style={{ ...style, background: "#F4EAE3" }} />;
   return (

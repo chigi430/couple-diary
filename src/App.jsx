@@ -6,6 +6,7 @@ import { useEntries } from "./useEntries";
 import { useSchedules } from "./useSchedules";
 import { useHideOnScroll } from "./useHideOnScroll";
 import { ensurePushHealthy } from "./push";
+import { clearSignedUrlCache } from "./SignedImage";
 import Auth from "./Auth";
 import Intro from "./Intro";
 import CoupleGate from "./CoupleGate";
@@ -132,7 +133,12 @@ export default function App() {
   const { schedules, byDate: scheduleByDate, addSchedule, updateSchedule, deleteSchedule } = useSchedules(coupleId);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      // 서명 URL은 7일간 유효하므로 이 기기에 남겨두면 안 된다
+      clearSignedUrlCache();
+    }
   };
 
   const regenerateCode = async () => {

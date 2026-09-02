@@ -3,6 +3,7 @@ import { supabase } from "./supabaseClient";
 import { S } from "./styles";
 import { EMOJI_CHOICES, COLOR_CHOICES } from "./constants";
 import { compressImage, uuid } from "./utils";
+import { clearSignedUrlCache } from "./SignedImage";
 import { pushSupported, subscribePush, unsubscribePush, syncPushSubscription } from "./push";
 import { isDarkActive, setTheme } from "./theme";
 import { toast } from "./toast";
@@ -218,6 +219,8 @@ export default function Settings({ profile, partner, coupleId, onSaved, onSignOu
       toast("연결 해제에 실패했어요. 잠시 후 다시 시도해주세요.");
       return;
     }
+    // 연결이 끊기면 그 커플 사진에 접근할 이유가 없다 (서명 URL은 7일간 유효)
+    clearSignedUrlCache();
     await onSaved();
   };
 
