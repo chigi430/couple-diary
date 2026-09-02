@@ -160,6 +160,7 @@ export default function PhotoLightbox({ photos, initialIndex, onClose }) {
         <SignedImage
           key={photo.id}
           path={photo.storage_path}
+          loading="eager"
           style={{
             ...S.lightboxImg,
             transform: `translate(-50%, -50%) translate(${xf.tx}px, ${xf.ty}px) scale(${xf.scale})`,
