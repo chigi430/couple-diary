@@ -156,3 +156,10 @@
 - **health 지표**: `daily-check` cron 활성(`0 12 * * *`), 최근 http 응답 1건 200, 구독 5개 — 이상 없어 별도 조치 없음.
 - **조치**: 처리할 제보도 없고 health 이상도 없어 코드 변경 없음.
 - **알림**: maintenance-bot의 `notify` 액션으로 "특이사항 없음" 안내 발송함.
+
+## 2026-09-12 — 야간 점검 루틴 실행, 특이사항 없음
+
+- **트리거**: 야간 점검 루틴(Part B) 실행. `maintenance-bot`에 `{"action":"list"}` POST 성공 — 열린 제보 0건.
+- **health 지표**: `daily-check` cron 활성(`0 12 * * *`), 최근 http 응답 1건(`status_code: null`), 구독 5개. `status_code: null`은 `net._http_response`가 비동기라 요청 발생 직후(created가 cron 실행 시각과 정확히 일치) 아직 응답이 안 채워진 상태로 확인됨(`supabase-setup.sql` 22번 섹션 `maintenance_health()` 참고) — 4xx/5xx 다수 발생이나 cron 비활성 같은 이상 패턴은 아니어서 별도 조치 없음.
+- **조치**: 처리할 제보도 없고 health 이상도 없어 코드 변경 없음.
+- **알림**: maintenance-bot의 `notify` 액션으로 "특이사항 없음" 안내 발송함.
