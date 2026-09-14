@@ -6,3 +6,5 @@ dev-dist
 .DS_Store
 *.local
 .env*
+# 암호화된 .env 백업(아래 참고)은 평문이 아니므로 예외적으로 커밋 대상에 포함
+!.env.enc

@@ -101,12 +101,13 @@
 
 1. Node.js, Git, VSCode + Claude Code 확장 설치
 2. `git clone https://github.com/chigi430/couple-diary.git` 후 `npm install`
-3. `.env.example`을 복사해서 `.env`로 만들고 실제 값 채우기:
+3. **`.env` 암호화 백업**(`.env.enc`, 저장소에 커밋돼 있음)에서 바로 복원 가능: `openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in .env.enc -out .env` (비밀번호를 물어봄, 사용자가 별도 보관 — 이 문서에는 안 적음). 이러면 아래 4단계를 건너뛰어도 됨. `.env`를 고쳤으면 `.env.enc`도 다시 암호화해서 커밋해야 최신 유지됨(자동화 안 됨): `openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in .env -out .env.enc`.
+4. (백업이 없거나 새로 만드는 경우) `.env.example`을 복사해서 `.env`로 만들고 실제 값 채우기:
    - `VITE_SUPABASE_URL`, `VITE_SUPABASE_KEY` — Supabase 대시보드 → Settings → API Keys
    - `VITE_KAKAO_MAP_APP_KEY` — Kakao Developers → 내 애플리케이션 → 앱 키 → JavaScript 키 (Web 플랫폼 도메인에 `http://localhost:5173`과 실제 배포 도메인이 이미 둘 다 등록돼 있어서 새 PC에서 추가 설정 불필요, 포트만 5173으로 맞으면 됨)
    - `VITE_VAPID_PUBLIC_KEY` — 기존에 생성해둔 값 그대로 사용(비밀키와 짝이 맞아야 하므로 새로 만들면 안 됨), 모르면 물어볼 것
    - `VITE_MAINTAINER_USER_ID` — 오류 제보 화면에서 배포 버튼 등 유지보수 상세정보를 볼 수 있는 계정(창환님 profiles.id). 비밀값 아님, `.env.example`에 실제 값이 이미 적혀 있으니 그대로 복사. **DB를 초기화해서 계정을 다시 만든 경우엔 이 값이 옛날 계정 id라 안 맞을 수 있음** — 그럴 땐 새 id를 찾아서 `.env.example`과 Vercel 프로젝트 환경변수 양쪽 다 갱신하고 재배포해야 반영됨
-4. `npm run dev`로 실행
+5. `npm run dev`로 실행
 
 Edge Function 배포/시크릿 설정은 클라우드 쪽이라 새 PC에서 다시 할 필요 없음 — 다만 Edge Function 코드를 새 PC에서 수정해서 재배포하려면 그 PC에서 `npx supabase login` → `npx supabase link --project-ref heksenfpxztwwstbqkll` 한 번은 해줘야 함.
 
