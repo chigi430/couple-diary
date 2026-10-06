@@ -7,7 +7,7 @@ import { useSchedules } from "./useSchedules";
 import { useNotifications } from "./useNotifications";
 import { useHideOnScroll } from "./useHideOnScroll";
 import { ensurePushHealthy } from "./push";
-import { useBackClose } from "./backStack";
+import { useBackClose, setRootBackHandler, armRootGuard, exitApp } from "./backStack";
 import { clearSignedUrlCache } from "./SignedImage";
 import Auth from "./Auth";
 import Intro from "./Intro";
@@ -20,6 +20,8 @@ import DaySheet from "./DaySheet";
 import Settings from "./Settings";
 import ProfileView from "./ProfileView";
 import AnniversarySheet from "./AnniversarySheet";
+import ConfirmSheet from "./ConfirmSheet";
+import { toast } from "./toast";
 import NotificationSheet from "./NotificationSheet";
 import Avatar from "./Avatar";
 import ToastHost from "./ToastHost";
@@ -49,6 +51,13 @@ export default function App() {
   const tabbarHidden = useHideOnScroll({ threshold: 6, topGuard: 40 });
   // '오늘' 말고 다른 탭에 있을 때 뒤로가기 → '오늘' 탭으로 (앱이 바로 꺼지지 않게). 열린 시트가 있으면 시트가 먼저 닫힘.
   useBackClose(() => setTab("today"), tab !== "today");
+  // '오늘' 탭에서 열린 화면 없이 뒤로가기 → 바로 꺼지지 않고 종료 확인창
+  const [exitAsk, setExitAsk] = useState(false);
+  useEffect(() => {
+    setRootBackHandler(() => setExitAsk(true));
+    armRootGuard();
+    return () => setRootBackHandler(null);
+  }, []);
 
   // 리캡 알림 클릭으로 들어온 경우, 주소창의 ?recap=1 은 한 번 쓰고 지운다
   useEffect(() => {
@@ -388,6 +397,25 @@ export default function App() {
           }}
           onClose={() => setNotiOpen(false)}
         />
+      )}
+
+      {exitAsk && (
+        <ConfirmSheet
+          title="앱 종료"
+          confirmLabel="종료"
+          onConfirm={() =>
+            exitApp(() => {
+              setExitAsk(false);
+              toast("브라우저에서는 탭을 직접 닫아주세요");
+            })
+          }
+          onClose={() => {
+            setExitAsk(false);
+            armRootGuard(); // 다음 뒤로가기도 다시 확인창으로
+          }}
+        >
+          오늘의 우리를 종료할까요?
+        </ConfirmSheet>
       )}
 
       {annEditOpen && (
