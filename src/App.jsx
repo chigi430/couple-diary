@@ -20,7 +20,6 @@ import DaySheet from "./DaySheet";
 import Settings from "./Settings";
 import ProfileView from "./ProfileView";
 import AnniversarySheet from "./AnniversarySheet";
-import ConfirmSheet from "./ConfirmSheet";
 import { toast } from "./toast";
 import NotificationSheet from "./NotificationSheet";
 import Avatar from "./Avatar";
@@ -51,10 +50,19 @@ export default function App() {
   const tabbarHidden = useHideOnScroll({ threshold: 6, topGuard: 40 });
   // '오늘' 말고 다른 탭에 있을 때 뒤로가기 → '오늘' 탭으로 (앱이 바로 꺼지지 않게). 열린 시트가 있으면 시트가 먼저 닫힘.
   useBackClose(() => setTab("today"), tab !== "today");
-  // '오늘' 탭에서 열린 화면 없이 뒤로가기 → 바로 꺼지지 않고 종료 확인창
-  const [exitAsk, setExitAsk] = useState(false);
+  // '오늘' 탭에서 열린 화면 없이 뒤로가기: 처음엔 안내만, 2초 안에 한 번 더 누르면 종료
   useEffect(() => {
-    setRootBackHandler(() => setExitAsk(true));
+    let lastAt = 0;
+    setRootBackHandler(() => {
+      const now = Date.now();
+      if (now - lastAt < 2000) {
+        exitApp(() => toast("브라우저에서는 탭을 직접 닫아주세요"));
+        return;
+      }
+      lastAt = now;
+      toast("한 번 더 누르면 종료돼요");
+      armRootGuard();
+    });
     armRootGuard();
     return () => setRootBackHandler(null);
   }, []);
@@ -397,25 +405,6 @@ export default function App() {
           }}
           onClose={() => setNotiOpen(false)}
         />
-      )}
-
-      {exitAsk && (
-        <ConfirmSheet
-          title="앱 종료"
-          confirmLabel="종료"
-          onConfirm={() =>
-            exitApp(() => {
-              setExitAsk(false);
-              toast("브라우저에서는 탭을 직접 닫아주세요");
-            })
-          }
-          onClose={() => {
-            setExitAsk(false);
-            armRootGuard(); // 다음 뒤로가기도 다시 확인창으로
-          }}
-        >
-          오늘의 우리를 종료할까요?
-        </ConfirmSheet>
       )}
 
       {annEditOpen && (

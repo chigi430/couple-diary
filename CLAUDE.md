@@ -63,7 +63,7 @@
 ## 뒤로가기 처리
 
 - `src/backStack.js` — 폰 뒤로가기로 앱이 꺼지지 않고 열린 화면을 하나씩 닫음. 화면이 열릴 때 `history.pushState`, `popstate` 오면 맨 위 화면 close. 버튼으로 닫힌 화면은 `history.back()`으로 자기 칸 회수(비동기라 그 사이 새로 열린 화면 push 는 큐에 미룸). 닫기 전에 `activeElement.blur()` 해서 textarea onBlur 자동저장을 먼저 태움.
-- `useSheetDrag(onClose, backActive=true)`가 자동으로 `useBackClose`를 걸어줌 → 시트는 대부분 공짜로 지원. **항상 마운트돼 있고 열림을 state로만 갖는 시트는 `backActive`에 그 state를 넘길 것**(Settings 프로필 편집 시트처럼) — 안 그러면 닫혀 있어도 뒤로가기를 가로챔. 시트가 아닌 오버레이(`PhotoLightbox`, `ProfileView`, 프로필 사진 확대)는 `useBackClose` 직접 호출. 탭: '오늘' 외 탭에서 뒤로가기 → '오늘' 탭(App.jsx). '오늘' 탭에서 열린 화면 없이 뒤로가기 → 종료 확인창: history 맨 아래 가드 칸(`armRootGuard`)이 소비되면 `setRootBackHandler`로 등록한 함수가 확인창을 띄움, '취소'면 가드 재설치, '종료'면 `exitApp()`이 history 를 끝까지 거슬러 앱 밖으로(PWA 는 닫힘, 일반 브라우저 탭에서 안 나가지면 안내 토스트).
+- `useSheetDrag(onClose, backActive=true)`가 자동으로 `useBackClose`를 걸어줌 → 시트는 대부분 공짜로 지원. **항상 마운트돼 있고 열림을 state로만 갖는 시트는 `backActive`에 그 state를 넘길 것**(Settings 프로필 편집 시트처럼) — 안 그러면 닫혀 있어도 뒤로가기를 가로챔. 시트가 아닌 오버레이(`PhotoLightbox`, `ProfileView`, 프로필 사진 확대)는 `useBackClose` 직접 호출. 탭: '오늘' 외 탭에서 뒤로가기 → '오늘' 탭(App.jsx). '오늘' 탭에서 열린 화면 없이 뒤로가기 → "한 번 더 누르면 종료돼요" 토스트, 2초 안에 또 누르면 종료: history 맨 아래 가드 칸(`armRootGuard`)이 소비되면 `setRootBackHandler` 함수가 호출됨 → 첫 번째면 토스트+가드 재설치, 두 번째면 `exitApp()`이 history 를 끝까지 거슬러 앱 밖으로(PWA 는 닫힘, 일반 브라우저 탭에서 안 나가지면 안내 토스트). (처음엔 종료 확인창이었는데 조잡하다고 해서 2026-10-06 바꿈)
 
 ## 푸시 알림 구조
 
