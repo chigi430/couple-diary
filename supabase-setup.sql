@@ -757,6 +757,40 @@ begin
 end;
 $$;
 
+-- ────────────────────────────────────────────────
+-- 24) 받은 알림 내역 (헤더 🔔 → 알림 목록)
+--     푸시 발송 공통 함수(Edge Function _shared/webpush.ts sendToUsers)가 받는 사람마다 1행씩 기록.
+--     푸시 구독이 없거나 발송이 실패해도 내역은 남는다. 야간 유지보수 알림은 기록 안 함.
+--     90일 지난 건 daily-check 가 정리.
+-- ────────────────────────────────────────────────
+create table if not exists notifications (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  title      text not null,
+  body       text not null default '',
+  url        text not null default '/',
+  created_at timestamptz not null default now(),
+  read_at    timestamptz
+);
+create index if not exists notifications_user_created_idx on notifications (user_id, created_at desc);
+
+alter table notifications enable row level security;
+-- 기록(insert)은 Edge Function 의 service role 만. 본인은 조회·읽음표시·삭제만.
+drop policy if exists "own notifications select" on notifications;
+create policy "own notifications select" on notifications for select using (user_id = auth.uid());
+drop policy if exists "own notifications update" on notifications;
+create policy "own notifications update" on notifications for update using (user_id = auth.uid()) with check (user_id = auth.uid());
+drop policy if exists "own notifications delete" on notifications;
+create policy "own notifications delete" on notifications for delete using (user_id = auth.uid());
+
+do $$
+begin
+  begin
+    alter publication supabase_realtime add table notifications;
+  exception when duplicate_object then null;
+  end;
+end $$;
+
 -- ============================================================
 --  끝! "Success. No rows returned" 이 뜨면 정상입니다.
 -- ============================================================

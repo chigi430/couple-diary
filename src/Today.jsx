@@ -9,7 +9,34 @@ import { useHideOnScroll } from "./useHideOnScroll";
 
 const PAGE_SIZE = 10;
 
-export default function Today({ byDate, people, onOpen }) {
+// '그날의 이야기'를 사람별로 나눠서 [uid, 글] 목록으로 (내 글 먼저). 예전 기록(notes 없음)은 빈 배열.
+function notesOf(entry, me) {
+  const obj = entry.notes && typeof entry.notes === "object" ? entry.notes : {};
+  return Object.entries(obj)
+    .filter(([, t]) => (t || "").trim() !== "")
+    .sort(([a], [b]) => (a === me ? -1 : b === me ? 1 : 0));
+}
+
+// 목록에서도 상세보기처럼 글마다 누가 썼는지 보여준다
+function NoteLines({ entry, me, who }) {
+  const list = notesOf(entry, me);
+  if (!list.length) return entry.note ? <p style={S.todayNote}>{entry.note}</p> : null;
+  return (
+    <div style={S.noteList}>
+      {list.map(([uid, text]) => (
+        <div key={uid}>
+          <div style={{ ...S.noteBy, marginTop: 0, marginBottom: 3 }}>
+            <Avatar person={who(uid)} size={16} />
+            {who(uid).display_name}
+          </div>
+          <p style={S.todayNote}>{text.trim()}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function Today({ byDate, people, me, onOpen }) {
   const t = todayStr();
   const e = byDate[t];
   const has = hasAny(e);
@@ -81,7 +108,7 @@ export default function Today({ byDate, people, onOpen }) {
                 return s ? <span key={k} style={S.metaPill}>{s.emoji} {s.label}</span> : null;
               })}
             </div>
-            {e.note && <p style={S.todayNote}>{e.note}</p>}
+            <NoteLines entry={e} me={me} who={who} />
             <button style={S.editBtn} onClick={() => onOpen(t, { mode: "edit" })}>오늘 기록 이어쓰기</button>
           </div>
         ) : (
@@ -123,17 +150,23 @@ export default function Today({ byDate, people, onOpen }) {
           <div style={S.feedHead}>지난 기록</div>
           {feedDates.slice(0, visible).map((k, i) => {
             const fe = byDate[k];
-            const authorId = fe.note ? fe.note_by : fe.photos && fe.photos[0] ? fe.photos[0].uploaded_by : null;
-            const author = authorId ? who(authorId) : null;
+            const noteAuthors = notesOf(fe, me).map(([uid]) => uid);
+            const authorIds = noteAuthors.length
+              ? noteAuthors
+              : fe.note && fe.note_by ? [fe.note_by]
+              : fe.photos && fe.photos[0] ? [fe.photos[0].uploaded_by] : [];
+            const authors = authorIds.map(who);
             return (
               <div key={k} style={{ ...S.feedCard, ...S.listPop, animationDelay: `${Math.min(i * 30, 300)}ms` }}>
                 <button style={S.feedTopRow} onClick={() => onOpen(k)}>
                   <div>
                     <div style={S.tlDate}>{prettyDate(k)}</div>
-                    {author && (
+                    {authors.length > 0 && (
                       <div style={S.tlByRow}>
-                        <Avatar person={author} size={16} />
-                        {author.display_name}
+                        {authors.map((a, ai) => (
+                          <Avatar key={ai} person={a} size={16} style={ai ? { marginLeft: -7 } : undefined} />
+                        ))}
+                        {authors.map((a) => a.display_name).join(" · ")}
                         <span style={S.tlByTime}>· {prettyTime(fe.updated_at)}</span>
                       </div>
                     )}
@@ -152,7 +185,7 @@ export default function Today({ byDate, people, onOpen }) {
                       return s ? <span key={sk} style={S.metaPill}>{s.emoji} {s.label}</span> : null;
                     })}
                   </div>
-                  {fe.note && <p style={S.todayNote}>{fe.note}</p>}
+                  <NoteLines entry={fe} me={me} who={who} />
                 </button>
               </div>
             );

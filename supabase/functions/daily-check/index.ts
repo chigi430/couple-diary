@@ -103,6 +103,11 @@ Deno.serve(async (req) => {
     }
   }
 
+  // 알림 내역(🔔)은 90일까지만 보관
+  const cutoff = new Date(Date.now() - 90 * 86400000).toISOString();
+  const { error: pruneErr } = await supabase.from("notifications").delete().lt("created_at", cutoff);
+  if (pruneErr) console.error("notification prune failed", pruneErr.message);
+
   return new Response(JSON.stringify({ ok: true, notified: summary }), {
     headers: { "Content-Type": "application/json" },
   });

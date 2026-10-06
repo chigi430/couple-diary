@@ -46,7 +46,7 @@ async function handleNotify(body: any) {
   const { message } = body;
   if (!message) return json({ error: "message required" }, 400);
   if (!MAINTENANCE_OWNER_USER_ID) return json({ error: "MAINTENANCE_OWNER_USER_ID not configured" }, 500);
-  await sendToUsers([MAINTENANCE_OWNER_USER_ID], { title: "유지보수 점검", body: message, url: "/" });
+  await sendToUsers([MAINTENANCE_OWNER_USER_ID], { title: "유지보수 점검", body: message, url: "/" }, { record: false });
   return json({ ok: true });
 }
 

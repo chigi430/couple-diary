@@ -4,6 +4,7 @@ import { S, css } from "./styles";
 import { anniversaryInfo } from "./utils";
 import { useEntries } from "./useEntries";
 import { useSchedules } from "./useSchedules";
+import { useNotifications } from "./useNotifications";
 import { useHideOnScroll } from "./useHideOnScroll";
 import { ensurePushHealthy } from "./push";
 import { clearSignedUrlCache } from "./SignedImage";
@@ -18,9 +19,10 @@ import DaySheet from "./DaySheet";
 import Settings from "./Settings";
 import ProfileView from "./ProfileView";
 import AnniversarySheet from "./AnniversarySheet";
+import NotificationSheet from "./NotificationSheet";
 import Avatar from "./Avatar";
 import ToastHost from "./ToastHost";
-import { IconToday, IconCalendar, IconList, IconStar, IconSettings } from "./Icons";
+import { IconToday, IconCalendar, IconList, IconStar, IconSettings, IconBell } from "./Icons";
 import logoMark from "./assets/logo-icon.svg";
 
 export default function App() {
@@ -38,6 +40,7 @@ export default function App() {
   const [autoRecap, setAutoRecap] = useState(() => (wantsRecap ? Date.now() : null));
   const [selected, setSelected] = useState(null);
   const [annEditOpen, setAnnEditOpen] = useState(false);
+  const [notiOpen, setNotiOpen] = useState(false);
   const [profileViewId, setProfileViewId] = useState(null);
   const [editProfileSignal, setEditProfileSignal] = useState(0);
   const [nowTick, setNowTick] = useState(Date.now());
@@ -131,6 +134,7 @@ export default function App() {
   const userId = session?.user?.id || null;
   const { byDate, saveEntry, uploadPhotos, deletePhoto, deleteEntry } = useEntries(coupleId, userId);
   const { schedules, byDate: scheduleByDate, addSchedule, updateSchedule, deleteSchedule } = useSchedules(coupleId);
+  const notifications = useNotifications(userId);
 
   const signOut = async () => {
     try {
@@ -190,6 +194,12 @@ export default function App() {
             <div style={S.brandName}>오늘의 우리</div>
             <div style={S.brandSub}>함께 쌓아가는 날들</div>
           </div>
+          <button style={S.headerBellBtn} onClick={() => setNotiOpen(true)} aria-label={`알림${notifications.unreadCount ? ` ${notifications.unreadCount}개 안 읽음` : ""}`}>
+            <IconBell size={17} />
+            {notifications.unreadCount > 0 && (
+              <span style={S.headerBellBadge}>{notifications.unreadCount > 99 ? "99+" : notifications.unreadCount}</span>
+            )}
+          </button>
           <div style={S.headerPeople}>
             {partnerInfo && (
               <button
@@ -261,6 +271,7 @@ export default function App() {
         <Today
           byDate={byDate}
           people={people}
+          me={userId}
           onOpen={(d, opts) => setSelected({ date: d, initialTab: "diary", onlyDiary: true, forceEdit: opts?.mode === "edit" })}
         />
       ) : tab === "calendar" ? (
@@ -357,6 +368,22 @@ export default function App() {
           }}
           onRefresh={loadProfile}
           onClose={() => setProfileViewId(null)}
+        />
+      )}
+
+      {notiOpen && (
+        <NotificationSheet
+          items={notifications.items}
+          markAllRead={notifications.markAllRead}
+          clearAll={notifications.clearAll}
+          onOpenUrl={(url) => {
+            setNotiOpen(false);
+            if (url.includes("recap=1")) {
+              setTab("timeline");
+              setAutoRecap(Date.now());
+            }
+          }}
+          onClose={() => setNotiOpen(false)}
         />
       )}
 

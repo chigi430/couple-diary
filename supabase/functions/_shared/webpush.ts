@@ -13,8 +13,24 @@ export function serviceClient() {
   return createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 }
 
-export async function sendToUsers(userIds: string[], payload: { title: string; body: string; url: string }) {
+// record=true 면 받는 사람마다 notifications 테이블에 내역을 남긴다(앱 헤더 🔔 알림 목록).
+// 푸시 구독이 없거나 발송이 실패해도 내역은 남김. 야간 유지보수 알림처럼 내역에 안 남길 건 false.
+export async function sendToUsers(
+  userIds: string[],
+  payload: { title: string; body: string; url: string },
+  { record = true }: { record?: boolean } = {}
+) {
   const supabase = serviceClient();
+  if (record) {
+    const rows = [...new Set(userIds)].map((user_id) => ({
+      user_id,
+      title: payload.title,
+      body: payload.body ?? "",
+      url: payload.url || "/",
+    }));
+    const { error: recErr } = await supabase.from("notifications").insert(rows);
+    if (recErr) console.error("notification record failed", recErr.message); // 기록 실패해도 푸시는 보냄
+  }
   const { data: subs, error } = await supabase.from("push_subscriptions").select("*").in("user_id", userIds);
   if (error) throw error;
 
