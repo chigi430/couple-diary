@@ -6,6 +6,7 @@ import { toast } from "./toast";
 import Avatar from "./Avatar";
 import MoreMenu from "./MoreMenu";
 import { useScrollLock } from "./scrollLock";
+import { useBackClose } from "./backStack";
 import { IconX, IconCalendar, IconList } from "./Icons";
 
 // 카카오톡 프로필처럼 전체화면으로 상대(또는 내) 프로필을 보여주는 오버레이.
@@ -23,11 +24,13 @@ export default function ProfileView({
   onClose,
 }) {
   useScrollLock();
+  useBackClose(onClose);
   const fileRef = useRef(null);
   const [cover, setCover] = useState(person?.cover_url || "");
   const [uploading, setUploading] = useState(false);
   const [poking, setPoking] = useState(false);
   const [zoom, setZoom] = useState(false);
+  useBackClose(() => setZoom(false), zoom);
   // 내가 마지막으로 콕 보낸 시각 기준으로 쿨다운이 언제 끝나는지 (ms epoch)
   const [cooldownUntil, setCooldownUntil] = useState(() => {
     const t = me?.last_poke_at ? new Date(me.last_poke_at).getTime() + POKE_COOLDOWN_MS : 0;

@@ -1,4 +1,5 @@
 import { useCallback, useRef } from "react";
+import { useBackClose } from "./backStack";
 
 const CLOSE_THRESHOLD = 78; // 이만큼 내리면 닫힘
 const FLICK_VELOCITY = 0.4; // px/ms — 살짝만 내려도 빠르게 톡 내리면 닫힘
@@ -10,7 +11,10 @@ const FADE_EASE = "background .32s ease";
 // 시트 상단 핸들바를 아래로 끌면 닫히는 동작.
 // 드래그 중에는 React 리렌더 없이 ref로 transform 을 직접(rAF) 갱신해서,
 // 사진이 많은 무거운 시트(DaySheet 등)에서도 손가락을 부드럽게 따라오게 한다.
-export function useSheetDrag(onClose) {
+// 폰의 뒤로가기 버튼으로도 닫힌다(backActive). 시트가 항상 마운트돼 있고 열림 여부만 state 로 갖는 곳은
+// backActive 에 그 state 를 넘길 것 (안 그러면 닫혀 있어도 뒤로가기를 가로챔).
+export function useSheetDrag(onClose, backActive = true) {
+  useBackClose(onClose, backActive);
   const sheetRef = useRef(null);
   const overlayRef = useRef(null);
 

@@ -60,6 +60,11 @@
 - (완료) 로고/아이콘 교체 — 새벽빛 그러데이션 하트 마크. `public/`에 `favicon.svg`·`favicon-16/32.png`·`apple-touch-icon.png`(180)·`icon-192/512.png`, `src/assets/`에 SVG 원본(`logo-icon`·`logo-horizontal`·`logo-stacked`·`app-icon`·`favicon`·`logo-mono`). 헤더/로그인/커플연결 화면 브랜드 마크는 `logo-icon.svg` 사용. 앱 포인트 컬러(`#D98763` 오렌지)는 로고 팔레트(코럴~베리)와 별개로 아직 그대로 — 통일할지는 미정
 - (아이디어만 논의, 미착수) 그룹/단체용으로 확장 — 한 사람이 여러 그룹에 속하는 구조로 바꿔야 함
 
+## 뒤로가기 처리
+
+- `src/backStack.js` — 폰 뒤로가기로 앱이 꺼지지 않고 열린 화면을 하나씩 닫음. 화면이 열릴 때 `history.pushState`, `popstate` 오면 맨 위 화면 close. 버튼으로 닫힌 화면은 `history.back()`으로 자기 칸 회수(비동기라 그 사이 새로 열린 화면 push 는 큐에 미룸). 닫기 전에 `activeElement.blur()` 해서 textarea onBlur 자동저장을 먼저 태움.
+- `useSheetDrag(onClose, backActive=true)`가 자동으로 `useBackClose`를 걸어줌 → 시트는 대부분 공짜로 지원. **항상 마운트돼 있고 열림을 state로만 갖는 시트는 `backActive`에 그 state를 넘길 것**(Settings 프로필 편집 시트처럼) — 안 그러면 닫혀 있어도 뒤로가기를 가로챔. 시트가 아닌 오버레이(`PhotoLightbox`, `ProfileView`, 프로필 사진 확대)는 `useBackClose` 직접 호출. 탭: '오늘' 외 탭에서 뒤로가기 → '오늘' 탭(App.jsx).
+
 ## 푸시 알림 구조
 
 - **프론트**: `src/sw.js`(커스텀 서비스워커, push/notificationclick 처리) + `src/push.js`(구독 생성/해제) + `Settings.jsx`의 알림 토글(구독 on-off + 카테고리별 on-off). `vite-plugin-pwa`는 `injectManifest` 전략 사용 중(커스텀 SW를 넣으려면 이 방식이 필요).

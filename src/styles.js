@@ -82,6 +82,8 @@ export const css = `
 @keyframes tabFade { from { opacity:0; transform: translateY(4px) } to { opacity:1; transform: translateY(0) } }
 @keyframes slideUpFade { from { opacity:0; transform: translateY(16px) } to { opacity:1; transform: translateY(0) } }
 @keyframes toastIn { from { opacity:0; transform: translate(-50%, -14px) } to { opacity:1; transform: translate(-50%, 0) } }
+@keyframes calInFromRight { from { opacity:0; transform: translateX(28px) } to { opacity:1; transform: none } }
+@keyframes calInFromLeft { from { opacity:0; transform: translateX(-28px) } to { opacity:1; transform: none } }
 @keyframes listPop { from { opacity:0; transform: translateY(8px) } to { opacity:1; transform: none } }
 @keyframes imgShimmer { from { background-position: 200% 0 } to { background-position: -200% 0 } }
 /* 사진 로딩 중 자리표시(스켈레톤). <img>가 아직 안 그려졌을 때 배경으로 은은하게 흐름 */

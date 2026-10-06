@@ -5,6 +5,7 @@ import SignedImage, { getSignedUrl, prefetchSignedUrls } from "./SignedImage";
 import { IconX, IconShare } from "./Icons";
 import { toast } from "./toast";
 import { useScrollLock } from "./scrollLock";
+import { useBackClose } from "./backStack";
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 4;
@@ -14,6 +15,7 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 // 원본 사진을 꽉 채워 보여주고, 핀치줌/더블탭줌/드래그 이동, 좌우 스와이프로 사진 넘기기, 아래로 스와이프해서 닫기를 지원.
 export default function PhotoLightbox({ photos, initialIndex, onClose }) {
   useScrollLock();
+  useBackClose(onClose);
   const [index, setIndex] = useState(initialIndex);
   const [xf, setXf] = useState({ scale: 1, tx: 0, ty: 0 });
   const [saving, setSaving] = useState(false);

@@ -7,6 +7,7 @@ import { useSchedules } from "./useSchedules";
 import { useNotifications } from "./useNotifications";
 import { useHideOnScroll } from "./useHideOnScroll";
 import { ensurePushHealthy } from "./push";
+import { useBackClose } from "./backStack";
 import { clearSignedUrlCache } from "./SignedImage";
 import Auth from "./Auth";
 import Intro from "./Intro";
@@ -46,6 +47,8 @@ export default function App() {
   const [nowTick, setNowTick] = useState(Date.now());
   // 하단 탭은 살짝만 스크롤해도 바로 숨도록 임계값을 낮게 둠
   const tabbarHidden = useHideOnScroll({ threshold: 6, topGuard: 40 });
+  // '오늘' 말고 다른 탭에 있을 때 뒤로가기 → '오늘' 탭으로 (앱이 바로 꺼지지 않게). 열린 시트가 있으면 시트가 먼저 닫힘.
+  useBackClose(() => setTab("today"), tab !== "today");
 
   // 리캡 알림 클릭으로 들어온 경우, 주소창의 ?recap=1 은 한 번 쓰고 지운다
   useEffect(() => {

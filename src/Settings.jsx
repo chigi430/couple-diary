@@ -79,7 +79,7 @@ export default function Settings({ profile, partner, coupleId, onSaved, onSignOu
       .catch(() => setIsLatest(null));
   }, []);
 
-  const { handleProps, handleStyle, sheetStyle, overlayStyle, sheetRef, overlayRef } = useSheetDrag(() => setEditOpen(false));
+  const { handleProps, handleStyle, sheetStyle, overlayStyle, sheetRef, overlayRef } = useSheetDrag(() => setEditOpen(false), editOpen);
 
   const openEdit = () => {
     setName(profile?.display_name || "");

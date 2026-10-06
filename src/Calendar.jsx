@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { S } from "./styles";
 import { MONTHS, DOW, HOLIDAYS } from "./constants";
 import { ymd, todayStr, diffDays, hasAny as hasAnyEntry } from "./utils";
@@ -16,6 +16,8 @@ function addDays(dateStr, n) {
 export default function Calendar({ byDate, onOpen, schedules = [], people = {} }) {
   const now = new Date();
   const [view, setView] = useState({ y: now.getFullYear(), m: now.getMonth() });
+  const [slideDir, setSlideDir] = useState(0); // 1 = 다음 달(오른쪽에서 들어옴), -1 = 이전 달
+  const touch = useRef(null);
 
   const weeks = useMemo(() => {
     const first = new Date(view.y, view.m, 1);
@@ -72,14 +74,33 @@ export default function Calendar({ byDate, onOpen, schedules = [], people = {} }
     let m = view.m + delta, y = view.y;
     if (m < 0) { m = 11; y--; }
     if (m > 11) { m = 0; y++; }
+    setSlideDir(delta);
     setView({ y, m });
+  };
+
+  // 좌우로 밀어서 달 넘기기: 왼쪽으로 밀면 다음 달, 오른쪽으로 밀면 이전 달.
+  // 세로 스크롤과 헷갈리지 않게 가로 이동이 충분히 크고 세로보다 확실히 클 때만.
+  const onTouchStart = (ev) => {
+    if (ev.touches.length !== 1) return (touch.current = null);
+    const t = ev.touches[0];
+    touch.current = { x: t.clientX, y: t.clientY, at: Date.now() };
+  };
+  const onTouchEnd = (ev) => {
+    const st = touch.current;
+    touch.current = null;
+    if (!st) return;
+    const t = ev.changedTouches[0];
+    const dx = t.clientX - st.x;
+    const dy = t.clientY - st.y;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5 || Date.now() - st.at > 800) return;
+    move(dx < 0 ? 1 : -1);
   };
 
   const who = (id) => people[id] || { color: "#D98763" };
 
   return (
     <div style={S.body}>
-      <div style={S.card}>
+      <div style={{ ...S.card, touchAction: "pan-y" }} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <div style={S.monthNav}>
           <button style={S.navBtn} onClick={() => move(-1)} aria-label="이전 달">‹</button>
           <div style={S.monthTitleWrap}>
@@ -95,6 +116,10 @@ export default function Calendar({ byDate, onOpen, schedules = [], people = {} }
           ))}
         </div>
 
+        <div
+          key={`${view.y}-${view.m}`}
+          style={slideDir ? { animation: `${slideDir > 0 ? "calInFromRight" : "calInFromLeft"} .24s cubic-bezier(.2,.8,.2,1)` } : undefined}
+        >
         {weeks.map((week, wi) => (
           <div key={wi}>
             <div style={S.gridWrap}>
@@ -155,8 +180,9 @@ export default function Calendar({ byDate, onOpen, schedules = [], people = {} }
             )}
           </div>
         ))}
+        </div>
       </div>
-      <p style={S.hint}>날짜를 눌러 그날의 사진·이야기와 일정을 확인해보세요.</p>
+      <p style={S.hint}>날짜를 눌러 그날의 사진·이야기와 일정을 확인해보세요. 좌우로 밀면 달이 넘어가요.</p>
     </div>
   );
 }
