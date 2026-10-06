@@ -481,7 +481,10 @@ drop function if exists public.trg_notify_schedule();
 drop table    if exists public.notify_throttle;
 
 -- p_kind: 'diary' | 'photo' | 'schedule'
-create or replace function public.notify_partner_activity(p_kind text, p_detail text default '', p_url text default '/')
+-- p_date: 일기/사진이 속한 날짜. 오늘(KST)이면 "오늘", 아니면 "10월 3일"(올해가 아니면 "2025년 10월 3일")로 표시.
+-- 예전 3-인자 버전이 남아있으면 호출이 모호해지므로 제거
+drop function if exists public.notify_partner_activity(text, text, text);
+create or replace function public.notify_partner_activity(p_kind text, p_detail text default '', p_url text default '/', p_date date default null)
 returns void
 language plpgsql
 security definer
@@ -490,18 +493,32 @@ as $$
 declare
   my_couple uuid;
   my_name   text;
+  who       text;
+  today_kst date := (now() at time zone 'Asia/Seoul')::date;
+  day_label text;
   msg       text;
 begin
   select couple_id, display_name into my_couple, my_name
     from public.profiles where id = auth.uid();
   if my_couple is null then return; end if;
+  who := coalesce(my_name, '상대방') || '님이 ';
+
+  if p_date is null or p_date = today_kst then
+    day_label := '오늘';
+  else
+    day_label := case when extract(year from p_date) <> extract(year from today_kst)
+                      then extract(year from p_date)::int || '년 ' else '' end
+              || extract(month from p_date)::int || '월 '
+              || extract(day from p_date)::int || '일';
+  end if;
 
   msg := case p_kind
-    when 'diary'    then coalesce(my_name, '상대방') || '님이 오늘 일기를 남겼어요'
-    when 'photo'    then coalesce(my_name, '상대방') || '님이 사진을 올렸어요'
-    when 'schedule' then coalesce(my_name, '상대방') || '님이 일정을 추가했어요'
+    when 'diary'    then who || day_label || ' 일기를 남겼어요'
+    when 'photo'    then who || case when day_label = '오늘' then '사진을 올렸어요'
+                                     else day_label || ' 일기에 사진을 올렸어요' end
+    when 'schedule' then who || '일정을 추가했어요'
                          || case when coalesce(p_detail, '') <> '' then ': ' || p_detail else '' end
-    else coalesce(my_name, '상대방') || '님이 오늘을 기록했어요'
+    else who || day_label || '을 기록했어요'
   end;
 
   perform public.notify_partner(my_couple, auth.uid(), msg, '', coalesce(p_url, '/'), 'activity');

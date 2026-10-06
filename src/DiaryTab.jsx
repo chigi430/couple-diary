@@ -58,8 +58,11 @@ export default function DiaryTab({ date, entry, me, people, saveEntry, uploadPho
     if (!noteChanged && !photoAdded) return;
     dirtyRef.current = { note: false };
     photoDeltaRef.current = 0;
-    supabase.rpc("notify_partner_activity", { p_kind: noteChanged ? "diary" : "photo" });
-  }, []);
+    // supabase.rpc() 는 then/await 해야 실제로 요청이 나간다 (안 하면 알림이 조용히 사라짐)
+    supabase
+      .rpc("notify_partner_activity", { p_kind: noteChanged ? "diary" : "photo", p_date: date })
+      .then(({ error }) => error && console.error("활동 알림 실패:", error));
+  }, [date]);
 
   const prevModeRef = useRef(mode);
   useEffect(() => {

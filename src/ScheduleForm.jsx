@@ -38,7 +38,9 @@ export default function ScheduleForm({ date, existing, meInfo, onSave, onDelete,
     }
     // 새 일정 등록을 마쳤을 때만 상대에게 알림 1회 (수정은 알림 안 감 — 기존 동작 유지)
     if (!existing) {
-      supabase.rpc("notify_partner_activity", { p_kind: "schedule", p_detail: title.trim() });
+      supabase
+        .rpc("notify_partner_activity", { p_kind: "schedule", p_detail: title.trim() })
+        .then(({ error }) => error && console.error("활동 알림 실패:", error));
     }
     onClose();
     toast(existing ? "일정을 수정했어요 ✓" : "일정을 등록했어요 ✓");
