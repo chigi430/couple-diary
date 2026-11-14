@@ -534,3 +534,12 @@
 - **조치**: 코드 변경 없음.
 - **PR**: 없음.
 - **알림**: maintenance-bot의 `notify` 액션으로 "오늘 점검: 특이사항 없음" 발송함.
+
+## 2026-11-14 — 야간 점검 루틴 실행, 특이사항 없음
+
+- **트리거**: 야간 점검 루틴 실행. `maintenance-bot`에 `{"action":"list"}` POST 성공 — 열린 제보 0건.
+- **health 지표**: `daily-check` cron 활성(`0 12 * * *`), 구독 4개. 최근 http 응답 1건(12:00:00Z)의 status_code는 null — 기존과 동일한 패턴이며 4xx/5xx 없음.
+- **진단**: 11-13 로그의 진단(cron `net.http_post`의 기본 timeout으로 응답 전에 끝나는 것으로 보임, 알림 기능 장애 아님)과 같은 상황. 고치려면 `supabase-setup.sql` 수정이 필요해 계속 사람 승인 대기.
+- **조치**: 코드 변경 없음.
+- **PR**: 없음.
+- **알림**: maintenance-bot의 `notify` 액션으로 "오늘 점검: 특이사항 없음" 발송함.
